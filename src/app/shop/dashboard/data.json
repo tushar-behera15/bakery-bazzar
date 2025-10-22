@@ -1,0 +1,614 @@
+[
+  {
+    "id": 1,
+    "name": "Chocolate Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1200,
+    "stock": 15,
+    "chef": "Emma"
+  },
+  {
+    "id": 2,
+    "name": "Blueberry Muffin",
+    "category": "Muffins",
+    "status": "Available",
+    "price": 150,
+    "stock": 50,
+    "chef": "Liam"
+  },
+  {
+    "id": 3,
+    "name": "Croissant",
+    "category": "Pastries",
+    "status": "Out of Stock",
+    "price": 80,
+    "stock": 0,
+    "chef": "Olivia"
+  },
+  {
+    "id": 4,
+    "name": "Bagel",
+    "category": "Bread",
+    "status": "Available",
+    "price": 60,
+    "stock": 30,
+    "chef": "Noah"
+  },
+  {
+    "id": 5,
+    "name": "Red Velvet Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1300,
+    "stock": 10,
+    "chef": "Sophia"
+  },
+  {
+    "id": 6,
+    "name": "Chocolate Chip Cookie",
+    "category": "Cookies",
+    "status": "Coming Soon",
+    "price": 40,
+    "stock": 0,
+    "chef": "Mason"
+  },
+  {
+    "id": 7,
+    "name": "Sourdough Bread",
+    "category": "Bread",
+    "status": "Available",
+    "price": 250,
+    "stock": 20,
+    "chef": "Ava"
+  },
+  {
+    "id": 8,
+    "name": "Vanilla Cupcake",
+    "category": "Cupcakes",
+    "status": "Available",
+    "price": 100,
+    "stock": 25,
+    "chef": "Ethan"
+  },
+  {
+    "id": 9,
+    "name": "Cheese Danish",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 120,
+    "stock": 15,
+    "chef": "Isabella"
+  },
+  {
+    "id": 10,
+    "name": "Apple Pie",
+    "category": "Pies",
+    "status": "Available",
+    "price": 900,
+    "stock": 8,
+    "chef": "Lucas"
+  },
+  {
+    "id": 11,
+    "name": "Lemon Tart",
+    "category": "Tarts",
+    "status": "Available",
+    "price": 350,
+    "stock": 12,
+    "chef": "Mia"
+  },
+  {
+    "id": 12,
+    "name": "Pumpkin Pie",
+    "category": "Pies",
+    "status": "Out of Stock",
+    "price": 800,
+    "stock": 0,
+    "chef": "Aiden"
+  },
+  {
+    "id": 13,
+    "name": "Almond Croissant",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 150,
+    "stock": 20,
+    "chef": "Harper"
+  },
+  {
+    "id": 14,
+    "name": "Chocolate Brownie",
+    "category": "Cookies",
+    "status": "Available",
+    "price": 60,
+    "stock": 40,
+    "chef": "Evelyn"
+  },
+  {
+    "id": 15,
+    "name": "Cinnamon Roll",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 100,
+    "stock": 18,
+    "chef": "James"
+  },
+  {
+    "id": 16,
+    "name": "Vanilla Donut",
+    "category": "Donuts",
+    "status": "Available",
+    "price": 50,
+    "stock": 30,
+    "chef": "Amelia"
+  },
+  {
+    "id": 17,
+    "name": "Strawberry Tart",
+    "category": "Tarts",
+    "status": "Coming Soon",
+    "price": 400,
+    "stock": 0,
+    "chef": "Benjamin"
+  },
+  {
+    "id": 18,
+    "name": "Cheesecake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1500,
+    "stock": 12,
+    "chef": "Charlotte"
+  },
+  {
+    "id": 19,
+    "name": "Banana Muffin",
+    "category": "Muffins",
+    "status": "Available",
+    "price": 120,
+    "stock": 35,
+    "chef": "Elijah"
+  },
+  {
+    "id": 20,
+    "name": "Pecan Pie",
+    "category": "Pies",
+    "status": "Available",
+    "price": 950,
+    "stock": 6,
+    "chef": "Eleanor"
+  },
+  {
+    "id": 21,
+    "name": "Focaccia Bread",
+    "category": "Bread",
+    "status": "Available",
+    "price": 200,
+    "stock": 15,
+    "chef": "Henry"
+  },
+  {
+    "id": 22,
+    "name": "Carrot Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1100,
+    "stock": 10,
+    "chef": "Scarlett"
+  },
+  {
+    "id": 23,
+    "name": "Macarons",
+    "category": "Cookies",
+    "status": "Available",
+    "price": 30,
+    "stock": 60,
+    "chef": "Alexander"
+  },
+  {
+    "id": 24,
+    "name": "Raspberry Tart",
+    "category": "Tarts",
+    "status": "Available",
+    "price": 380,
+    "stock": 8,
+    "chef": "Grace"
+  },
+  {
+    "id": 25,
+    "name": "Baguette",
+    "category": "Bread",
+    "status": "Available",
+    "price": 150,
+    "stock": 20,
+    "chef": "Jack"
+  },
+  {
+    "id": 26,
+    "name": "Mocha Cake",
+    "category": "Cakes",
+    "status": "Coming Soon",
+    "price": 1400,
+    "stock": 0,
+    "chef": "Victoria"
+  },
+  {
+    "id": 27,
+    "name": "Gingerbread Cookie",
+    "category": "Cookies",
+    "status": "Available",
+    "price": 45,
+    "stock": 25,
+    "chef": "Leo"
+  },
+  {
+    "id": 28,
+    "name": "Chocolate Éclair",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 180,
+    "stock": 15,
+    "chef": "Hannah"
+  },
+  {
+    "id": 29,
+    "name": "Poppy Seed Bagel",
+    "category": "Bread",
+    "status": "Available",
+    "price": 70,
+    "stock": 22,
+    "chef": "Daniel"
+  },
+  {
+    "id": 30,
+    "name": "Mango Mousse",
+    "category": "Desserts",
+    "status": "Available",
+    "price": 500,
+    "stock": 10,
+    "chef": "Lily"
+  },
+  {
+    "id": 31,
+    "name": "Coconut Macaroon",
+    "category": "Cookies",
+    "status": "Coming Soon",
+    "price": 35,
+    "stock": 0,
+    "chef": "Sebastian"
+  },
+  {
+    "id": 32,
+    "name": "Whole Wheat Bread",
+    "category": "Bread",
+    "status": "Available",
+    "price": 180,
+    "stock": 18,
+    "chef": "Aria"
+  },
+  {
+    "id": 33,
+    "name": "Matcha Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1300,
+    "stock": 9,
+    "chef": "William"
+  },
+  {
+    "id": 34,
+    "name": "Apricot Tart",
+    "category": "Tarts",
+    "status": "Available",
+    "price": 360,
+    "stock": 14,
+    "chef": "Maya"
+  },
+  {
+    "id": 35,
+    "name": "Butter Croissant",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 120,
+    "stock": 25,
+    "chef": "James"
+  },
+  {
+    "id": 36,
+    "name": "Cheddar Scone",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 150,
+    "stock": 12,
+    "chef": "Ella"
+  },
+  {
+    "id": 37,
+    "name": "Chocolate Donut",
+    "category": "Donuts",
+    "status": "Available",
+    "price": 60,
+    "stock": 30,
+    "chef": "Liam"
+  },
+  {
+    "id": 38,
+    "name": "Pumpkin Muffin",
+    "category": "Muffins",
+    "status": "Available",
+    "price": 140,
+    "stock": 20,
+    "chef": "Olivia"
+  },
+  {
+    "id": 39,
+    "name": "Strawberry Cupcake",
+    "category": "Cupcakes",
+    "status": "Available",
+    "price": 100,
+    "stock": 25,
+    "chef": "Mason"
+  },
+  {
+    "id": 40,
+    "name": "Banana Bread",
+    "category": "Bread",
+    "status": "Available",
+    "price": 200,
+    "stock": 18,
+    "chef": "Ava"
+  },
+  {
+    "id": 41,
+    "name": "Tiramisu",
+    "category": "Desserts",
+    "status": "Available",
+    "price": 600,
+    "stock": 8,
+    "chef": "Ethan"
+  },
+  {
+    "id": 42,
+    "name": "Chocolate Tart",
+    "category": "Tarts",
+    "status": "Available",
+    "price": 400,
+    "stock": 12,
+    "chef": "Isabella"
+  },
+  {
+    "id": 43,
+    "name": "Lemon Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1200,
+    "stock": 10,
+    "chef": "Lucas"
+  },
+  {
+    "id": 44,
+    "name": "Caramel Macchiato Cupcake",
+    "category": "Cupcakes",
+    "status": "Available",
+    "price": 110,
+    "stock": 15,
+    "chef": "Mia"
+  },
+  {
+    "id": 45,
+    "name": "Raspberry Muffin",
+    "category": "Muffins",
+    "status": "Available",
+    "price": 130,
+    "stock": 20,
+    "chef": "Aiden"
+  },
+  {
+    "id": 46,
+    "name": "Chocolate Fudge Brownie",
+    "category": "Cookies",
+    "status": "Available",
+    "price": 50,
+    "stock": 30,
+    "chef": "Harper"
+  },
+  {
+    "id": 47,
+    "name": "Strawberry Donut",
+    "category": "Donuts",
+    "status": "Available",
+    "price": 60,
+    "stock": 25,
+    "chef": "Evelyn"
+  },
+  {
+    "id": 48,
+    "name": "Black Forest Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1500,
+    "stock": 8,
+    "chef": "James"
+  },
+  {
+    "id": 49,
+    "name": "Vanilla Cookie",
+    "category": "Cookies",
+    "status": "Available",
+    "price": 40,
+    "stock": 50,
+    "chef": "Amelia"
+  },
+  {
+    "id": 50,
+    "name": "Espresso Éclair",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 180,
+    "stock": 10,
+    "chef": "Benjamin"
+  },
+  {
+    "id": 51,
+    "name": "Pineapple Tart",
+    "category": "Tarts",
+    "status": "Available",
+    "price": 370,
+    "stock": 15,
+    "chef": "Charlotte"
+  },
+  {
+    "id": 52,
+    "name": "Cinnamon Donut",
+    "category": "Donuts",
+    "status": "Available",
+    "price": 55,
+    "stock": 20,
+    "chef": "Elijah"
+  },
+  {
+    "id": 53,
+    "name": "Red Velvet Cupcake",
+    "category": "Cupcakes",
+    "status": "Available",
+    "price": 120,
+    "stock": 18,
+    "chef": "Eleanor"
+  },
+  {
+    "id": 54,
+    "name": "Chocolate Lava Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1600,
+    "stock": 5,
+    "chef": "Henry"
+  },
+  {
+    "id": 55,
+    "name": "Vanilla Muffin",
+    "category": "Muffins",
+    "status": "Available",
+    "price": 130,
+    "stock": 25,
+    "chef": "Scarlett"
+  },
+  {
+    "id": 56,
+    "name": "Almond Cookie",
+    "category": "Cookies",
+    "status": "Available",
+    "price": 45,
+    "stock": 30,
+    "chef": "Alexander"
+  },
+  {
+    "id": 57,
+    "name": "Carrot Tart",
+    "category": "Tarts",
+    "status": "Available",
+    "price": 350,
+    "stock": 12,
+    "chef": "Grace"
+  },
+  {
+    "id": 58,
+    "name": "Chocolate Croissant",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 140,
+    "stock": 15,
+    "chef": "Jack"
+  },
+  {
+    "id": 59,
+    "name": "Mango Tart",
+    "category": "Tarts",
+    "status": "Coming Soon",
+    "price": 380,
+    "stock": 0,
+    "chef": "Victoria"
+  },
+  {
+    "id": 60,
+    "name": "Coffee Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1250,
+    "stock": 10,
+    "chef": "Leo"
+  },
+  {
+    "id": 61,
+    "name": "Peanut Butter Cookie",
+    "category": "Cookies",
+    "status": "Available",
+    "price": 50,
+    "stock": 28,
+    "chef": "Hannah"
+  },
+  {
+    "id": 62,
+    "name": "Blueberry Pie",
+    "category": "Pies",
+    "status": "Available",
+    "price": 850,
+    "stock": 9,
+    "chef": "Daniel"
+  },
+  {
+    "id": 63,
+    "name": "Chocolate Mousse",
+    "category": "Desserts",
+    "status": "Available",
+    "price": 550,
+    "stock": 12,
+    "chef": "Sarah"
+  },
+  {
+    "id": 64,
+    "name": "Vanilla Éclair",
+    "category": "Pastries",
+    "status": "Available",
+    "price": 160,
+    "stock": 8,
+    "chef": "Raj"
+  },
+  {
+    "id": 65,
+    "name": "Strawberry Pie",
+    "category": "Pies",
+    "status": "Available",
+    "price": 900,
+    "stock": 10,
+    "chef": "Leila"
+  },
+  {
+    "id": 66,
+    "name": "Coconut Cake",
+    "category": "Cakes",
+    "status": "Available",
+    "price": 1300,
+    "stock": 12,
+    "chef": "Thomas"
+  },
+  {
+    "id": 67,
+    "name": "Cheese Muffin",
+    "category": "Muffins",
+    "status": "Available",
+    "price": 140,
+    "stock": 18,
+    "chef": "David"
+  },
+  {
+    "id": 68,
+    "name": "Honey Bread",
+    "category": "Bread",
+    "status": "Available",
+    "price": 220,
+    "stock": 15,
+    "chef": "Eddie"
+  }
+]

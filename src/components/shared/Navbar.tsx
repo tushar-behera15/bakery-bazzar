@@ -6,7 +6,8 @@ import { Skeleton } from "../ui/skeleton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-
+import clsx from "clsx";
+import { usePathname } from "next/navigation";
 interface UserType {
     name?: string;
     email: string;
@@ -15,6 +16,14 @@ interface UserType {
 const Navbar = () => {
     const [user, setUser] = useState<UserType | null>(null);
     const [loading, setLoading] = useState(true);
+    const pathname = usePathname();
+
+    const links = [
+        { href: "/", label: "Home" },
+        { href: "/products", label: "Products" },
+        { href: "/about", label: "About Us" },
+        { href: "/contact", label: "Contact" },
+    ];
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -71,18 +80,18 @@ const Navbar = () => {
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-foreground hover:text-primary transition-colors">
-                            Home
-                        </Link>
-                        <Link href="/products" className="text-foreground hover:text-primary transition-colors">
-                            Products
-                        </Link>
-                        <Link href="/about" className="text-foreground hover:text-primary transition-colors">
-                            About Us
-                        </Link>
-                        <Link href="/contact" className="text-foreground hover:text-primary transition-colors">
-                            Contact
-                        </Link>
+                        {links.map(({ href, label }) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                className={clsx(
+                                    "text-foreground hover:text-primary transition-colors",
+                                    pathname === href && "text-primary font-semibold border-b-2 border-primary pb-1"
+                                )}
+                            >
+                                {label}
+                            </Link>
+                        ))}
                     </div>
 
                     {/* Actions */}
@@ -98,13 +107,13 @@ const Navbar = () => {
                             <>
                                 {/* User name */}
                                 <span className="hidden sm:inline font-medium">
-                                    <a href="https://seller-dashboard-blue.vercel.app/dashboard/">
+                                    <Link href="/shop/dashboard">
                                         Welcome, {user.name ? user.name.split(" ")[0] : user.email}
-                                    </a>
+                                    </Link>
                                 </span>
 
                                 {/* Become a Seller */}
-                                <Link href="/become-seller">
+                                <Link href="/shop/auth/register">
                                     <Button
                                         size="sm"
                                         className="bg-linear-to-r from-yellow-400 to-orange-500 text-white font-semibold 
