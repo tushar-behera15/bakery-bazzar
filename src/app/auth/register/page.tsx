@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 
 const Signup = () => {
     const [name, setName] = useState("");
+    const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -31,6 +32,7 @@ const Signup = () => {
             toast.error("Passwords don't match!");
             return;
         }
+        setLoading(true);
 
         try {
             const res = await fetch("http://localhost:5000/api/auth/register", {
@@ -59,6 +61,8 @@ const Signup = () => {
         } catch (error) {
             console.error("Error:", error);
             toast.error("Something went wrong!");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -147,8 +151,9 @@ const Signup = () => {
                             <Button
                                 type="submit"
                                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                                disabled={loading}
                             >
-                                Create Account
+                                {loading ? "Creating..." : "Create a account"}
                             </Button>
                         </form>
                     </CardContent>

@@ -2,14 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { toast } from "sonner";
 import {
     Store,
     User,
-    Mail,
-    Phone,
-    Lock,
     MapPin,
     FileText,
 } from "lucide-react";
@@ -21,7 +17,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
@@ -29,15 +24,9 @@ import {
 export default function SellerSignup() {
     const router = useRouter();
 
-    // User
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [phone, setPhone] = useState("");
-
     // Shop
     const [shopName, setShopName] = useState("");
+    const [loading, setLoading] = useState(false);
     const [shopDescription, setShopDescription] = useState("");
     const [shopEmail, setShopEmail] = useState("");
     const [shopContact, setShopContact] = useState("");
@@ -45,41 +34,34 @@ export default function SellerSignup() {
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (password !== confirmPassword) {
-            toast.error("Passwords do not match!");
-            return;
-        }
-
+        setLoading(true);
         try {
-            const res = await fetch("http://localhost:5000/api/auth/register-seller", {
+            const res = await fetch("http://localhost:5000/api/shop/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({
-                    name,
-                    email,
-                    password,
-                    phone,
-                    shop: {
-                        name: shopName,
-                        description: shopDescription,
-                        contactEmail: shopEmail,
-                        contactNumber: shopContact,
-                        address: shopAddress,
-                    },
+                    name: shopName,
+                    description: shopDescription,
+                    contactEmail: shopEmail,
+                    contactNumber: shopContact,
+                    address: shopAddress,
                 }),
             });
 
             const data = await res.json();
             if (res.ok) {
                 toast.success("Seller account created successfully!");
-                router.push("/auth/login");
+                router.push("/");
             } else {
                 toast.error(data.message || "Registration failed!");
             }
         } catch (err) {
             console.error(err);
             toast.error("Something went wrong!",);
+        }
+        finally {
+            setLoading(false);
         }
     };
 
@@ -116,79 +98,6 @@ export default function SellerSignup() {
 
                     <CardContent>
                         <form onSubmit={handleSignup} className="space-y-8">
-                            {/* 👤 Account Info */}
-                            <div>
-                                <h3 className="font-semibold text-lg mb-3 text-gray-700 flex items-center gap-2">
-                                    <User className="w-5 h-5 text-primary" /> Account Information
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="name" className="mb-2">Full Name</Label>
-                                        <Input
-                                            id="name"
-                                            placeholder="John Doe"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="email" className="mb-2">Email</Label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-2 top-2.5 text-gray-400 w-4 h-4" />
-                                            <Input
-                                                id="email"
-                                                type="email"
-                                                className="pl-8"
-                                                placeholder="you@example.com"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="phone" className="mb-2">Phone</Label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-2 top-2.5 text-gray-400 w-4 h-4" />
-                                            <Input
-                                                id="phone"
-                                                className="pl-8"
-                                                placeholder="9876543210"
-                                                value={phone}
-                                                onChange={(e) => setPhone(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="password" className="mb-2">Password</Label>
-                                        <div className="relative">
-                                            <Lock className="absolute left-2 top-2.5 text-gray-400 w-4 h-4" />
-                                            <Input
-                                                id="password"
-                                                type="password"
-                                                className="pl-8"
-                                                placeholder="••••••••"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="confirm" className="mb-2">Confirm Password</Label>
-                                        <Input
-                                            id="confirm"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            </div>
 
                             {/* 🏪 Shop Info */}
                             <div>
@@ -197,43 +106,46 @@ export default function SellerSignup() {
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <Label htmlFor="shopName" className="mb-2">Shop Name</Label>
+                                        <Label htmlFor="shopName" className="mb-2 text-primary">Shop Name</Label>
                                         <Input
                                             id="shopName"
                                             placeholder="Sweet Crumbs Bakery"
+                                            className="text-black"
                                             value={shopName}
                                             onChange={(e) => setShopName(e.target.value)}
                                             required
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="shopEmail" className="mb-2">Shop Email</Label>
+                                        <Label htmlFor="shopEmail" className="mb-2 text-primary">Shop Email</Label>
                                         <Input
                                             id="shopEmail"
                                             type="email"
                                             placeholder="shop@example.com"
+                                            className="text-black"
                                             value={shopEmail}
                                             onChange={(e) => setShopEmail(e.target.value)}
                                             required
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="shopContact" className="mb-2">Shop Phone</Label>
+                                        <Label htmlFor="shopContact" className="mb-2 text-primary">Shop Phone</Label>
                                         <Input
                                             id="shopContact"
                                             placeholder="9876543210"
+                                            className="text-black"
                                             value={shopContact}
                                             onChange={(e) => setShopContact(e.target.value)}
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <Label htmlFor="shopAddress" className="mb-2">Address</Label>
+                                        <Label htmlFor="shopAddress" className="mb-2 text-primary">Address</Label>
                                         <div className="relative">
                                             <MapPin className="absolute left-2 top-2.5 text-gray-400 w-4 h-4" />
                                             <Textarea
                                                 id="shopAddress"
                                                 rows={2}
-                                                className="pl-8"
+                                                className="pl-8 text-black"
                                                 placeholder="123 Main Street, Mumbai, India"
                                                 value={shopAddress}
                                                 onChange={(e) => setShopAddress(e.target.value)}
@@ -242,13 +154,13 @@ export default function SellerSignup() {
                                         </div>
                                     </div>
                                     <div className="md:col-span-2">
-                                        <Label htmlFor="shopDescription" className="mb-2">Description</Label>
+                                        <Label htmlFor="shopDescription" className="mb-2 text-primary">Description</Label>
                                         <div className="relative">
                                             <FileText className="absolute left-2 top-2.5 text-gray-400 w-4 h-4" />
                                             <Textarea
                                                 id="shopDescription"
                                                 rows={3}
-                                                className="pl-8"
+                                                className="pl-8 text-black"
                                                 placeholder="Describe your bakery and specialties..."
                                                 value={shopDescription}
                                                 onChange={(e) => setShopDescription(e.target.value)}
@@ -260,24 +172,14 @@ export default function SellerSignup() {
 
                             <Button
                                 type="submit"
+                                disabled={loading}
                                 className="w-full bg-linear-to-r from-orange-500 to-rose-500 text-white font-semibold text-lg shadow-lg hover:scale-[1.02] transition-transform"
                             >
-                                Register as Seller
+                                {loading ? "Registering..." : "Register as a seller"}
                             </Button>
                         </form>
                     </CardContent>
 
-                    <CardFooter className="text-center mt-4  flex gap-1 justify-center items-center">
-                        <div className="text-sm text-gray-500">
-                            <p>Already a seller?{" "}</p>
-                            <Link
-                                href="/auth/login"
-                                className="text-primary hover:underline font-medium"
-                            >
-                                Login
-                            </Link>
-                        </div>
-                    </CardFooter>
                 </Card>
             </div>
         </div>

@@ -24,7 +24,7 @@ import {
     IconGripVertical,
     IconLoader,
     IconDotsVertical,
-    IconPlus
+    IconPlus,
 } from "@tabler/icons-react"
 import {
     ColumnDef,
@@ -57,8 +57,29 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer"
+import {
+    Drawer,
+    DrawerTrigger,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerClose,
+} from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
 
 // 🧾 Product Schema
 export const productSchema = z.object({
@@ -180,16 +201,34 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof productSchema>> }) {
 // Main table
 export function ProductTable() {
     const [rows, setRows] = React.useState<z.infer<typeof productSchema>[]>([])
+    const [categories, setCategories] = React.useState<{ id: number; name: string }[]>([])
     const [sorting, setSorting] = React.useState<SortingState>([])
+    const [loading, setLoading] = React.useState(true)
+    const [openDialog, setOpenDialog] = React.useState(false)
+    const [newProduct, setNewProduct] = React.useState({
+        name: "",
+        description: "",
+        price: 0,
+        quantity: 0,
+        sku: "",
+        categoryId: 0,
+        Available: true,
+    })
+    const [createLoading, setCreateLoading] = React.useState(false)
 
-    // Fetch products from API
+    // Fetch products and categories
     React.useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/product")
-                const data = await res.json()
+                const [resProducts, resCategories] = await Promise.all([
+                    fetch("http://localhost:5000/api/product"),
+                    fetch("http://localhost:5000/api/category")
+                ])
+                const dataProducts = await resProducts.json()
+                const dataCategories = await resCategories.json()
+
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const parsed = data.map((p: any) => ({
+                const parsedProducts = dataProducts.map((p: any) => ({
                     id: p.id,
                     name: p.name,
                     description: p.description,
@@ -199,12 +238,16 @@ export function ProductTable() {
                     category: p.category?.name || null,
                     Available: p.isActive,
                 }))
-                setRows(parsed)
+
+                setRows(parsedProducts)
+                setCategories(dataCategories)
             } catch (error) {
-                console.error("Failed to fetch products:", error)
+                console.error(error)
+            } finally {
+                setLoading(false)
             }
         }
-        fetchProducts()
+        fetchData()
     }, [])
 
     const sensors = useSensors(
@@ -234,11 +277,152 @@ export function ProductTable() {
         }
     }
 
+    // Handle creating new product
+    const handleCreateProduct = async () => {
+        setCreateLoading(true)
+        try {
+            const res = await fetch("http://localhost:5000/api/product", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newProduct),
+            })
+            if (!res.ok) throw new Error("Failed to create product")
+            const created = await res.json()
+            setRows(prev => [...prev, {
+                ...created,
+                category: categories.find(c => c.id === created.categoryId)?.name || null,
+                Available: created.isActive
+            }])
+            toast.success("Product created successfully!")
+            setNewProduct({
+                name: "",
+                description: "",
+                price: 0,
+                quantity: 0,
+                sku: "",
+                categoryId: 0,
+                Available: true,
+            })
+            setOpenDialog(false)
+        } catch (err) {
+            console.error(err)
+            toast.error("Failed to create product")
+        } finally {
+            setCreateLoading(false)
+        }
+    }
+
+    if (loading) return <div className="text-center mt-3">Loading products...</div>
+
     return (
         <div className="w-full p-4">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Products</h2>
-                <Button variant="outline" size="sm"><IconPlus /> Add Product</Button>
+
+                {/* 🟢 Create Product Dialog */}
+                <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                            <IconPlus className="mr-1" /> Add Product
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Create Product</DialogTitle>
+                            <DialogDescription>
+                                Fill the details to add a new product.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-3 py-2">
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="name">Name</Label>
+                                <Input
+                                    id="name"
+                                    placeholder="Product name"
+                                    value={newProduct.name}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="description">Description</Label>
+                                <Input
+                                    id="description"
+                                    placeholder="Product description"
+                                    value={newProduct.description}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="price">Price</Label>
+                                <Input
+                                    type="text"
+                                    id="price"
+                                    value={isNaN(newProduct.price) ? "" : newProduct.price}
+                                    onChange={e =>
+                                        setNewProduct(prev => ({
+                                            ...prev,
+                                            price: parseFloat(e.target.value) || 0,
+                                        }))
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="quantity">Quantity</Label>
+                                <Input
+                                    type="text"
+                                    id="quantity"
+                                    value={isNaN(newProduct.quantity) ? "" : newProduct.quantity}
+                                    onChange={e =>
+                                        setNewProduct(prev => ({
+                                            ...prev,
+                                            quantity: parseInt(e.target.value) || 0,
+                                        }))
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="sku">SKU</Label>
+                                <Input
+                                    id="sku"
+                                    placeholder="Stock Keeping Unit"
+                                    value={newProduct.sku}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, sku: e.target.value }))}
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="category">Category</Label>
+                                <Select
+                                    value={newProduct.categoryId ? newProduct.categoryId.toString() : ""}
+                                    onValueChange={val => setNewProduct(prev => ({ ...prev, categoryId: parseInt(val) }))}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map(c => (
+                                            <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                        </div>
+
+                        <DialogFooter>
+                            <Button onClick={handleCreateProduct} disabled={createLoading}>
+                                {createLoading && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
+                                {createLoading ? "Creating..." : "Create"}
+                            </Button>
+                            <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]} sensors={sensors}>
@@ -265,5 +449,4 @@ export function ProductTable() {
     )
 }
 
-// Default export
 export default ProductTable
