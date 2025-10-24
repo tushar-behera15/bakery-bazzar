@@ -90,7 +90,7 @@ export const productSchema = z.object({
     quantity: z.number(),
     sku: z.string().nullable(),
     category: z.string().nullable(),
-    Available: z.boolean(),
+    isActive: z.boolean(),
 })
 
 // Drag handle
@@ -156,15 +156,33 @@ const columns: ColumnDef<z.infer<typeof productSchema>>[] = [
     },
     { accessorKey: "name", header: "Product Name", cell: ({ row }) => <ProductDrawer product={row.original} /> },
     { accessorKey: "category", header: "Category", cell: ({ row }) => <Badge variant="outline">{row.original.category || "N/A"}</Badge> },
-    { accessorKey: "price", header: "Price (₹)", cell: ({ row }) => <Input type="number" defaultValue={row.original.price} className="h-8 w-22 border-transparent bg-transparent text-right" /> },
-    { accessorKey: "quantity", header: "Quantity", cell: ({ row }) => <Input type="number" defaultValue={row.original.quantity} className="h-8 w-16 border-transparent bg-transparent text-right" /> },
     {
-        accessorKey: "Available", header: "Status", cell: ({ row }) => (
+        accessorKey: "price",
+        header: "Price (₹) per unit",
+        cell: ({ row }) => (
+            <div className="h-10 w-24 text-center dark:bg-zinc-800 rounded-lg px-2 flex items-center justify-center font-medium dark:text-white dark:hover:bg-zinc-700 transition-colors">
+                ₹{row.original.price}
+            </div>
+        ),
+    },
+    {
+        accessorKey: "quantity",
+        header: "Quantity",
+        cell: ({ row }) => (
+            <div className="h-10 w-24 text-center dark:bg-zinc-800 rounded-lg px-2 flex items-center justify-center font-medium dark:text-white dark:hover:bg-zinc-700 transition-colors">
+                {row.original.quantity}
+            </div>
+        ),
+    },
+    {
+        accessorKey: "isActive",
+        header: "Status",
+        cell: ({ row }) => (
             <Badge variant="outline" className="flex items-center gap-1">
-                {row.original.Available ? <IconCircleCheckFilled className="fill-green-500" /> : <IconLoader />}
-                {row.original.Available ? "Available" : "Unavailable"}
+                {row.original.isActive ? <IconCircleCheckFilled className="fill-green-500" /> : <IconLoader />}
+                {row.original.isActive ? "Available" : "Unavailable"}
             </Badge>
-        )
+        ),
     },
     {
         id: "actions",
@@ -212,7 +230,7 @@ export function ProductTable() {
         quantity: 0,
         sku: "",
         categoryId: 0,
-        Available: true,
+        isActive: true,
     })
     const [createLoading, setCreateLoading] = React.useState(false)
 
@@ -220,12 +238,15 @@ export function ProductTable() {
     React.useEffect(() => {
         const fetchData = async () => {
             try {
-                const [resProducts, resCategories] = await Promise.all([
-                    fetch("http://localhost:5000/api/product"),
+                const [resShop, resCategories] = await Promise.all([
+                    fetch("http://localhost:5000/api/shop/me", { credentials: "include" }),
                     fetch("http://localhost:5000/api/category")
                 ])
-                const dataProducts = await resProducts.json()
+
+                const dataShop = await resShop.json()
                 const dataCategories = await resCategories.json()
+
+                const dataProducts = dataShop.shop?.products || []
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const parsedProducts = dataProducts.map((p: any) => ({
@@ -236,7 +257,7 @@ export function ProductTable() {
                     quantity: p.quantity,
                     sku: p.sku,
                     category: p.category?.name || null,
-                    Available: p.isActive,
+                    isActive: !!p.isActive,
                 }))
 
                 setRows(parsedProducts)
@@ -277,7 +298,6 @@ export function ProductTable() {
         }
     }
 
-    // Handle creating new product
     const handleCreateProduct = async () => {
         setCreateLoading(true)
         try {
@@ -285,15 +305,27 @@ export function ProductTable() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newProduct),
+                credentials: "include",
             })
+
             if (!res.ok) throw new Error("Failed to create product")
-            const created = await res.json()
-            setRows(prev => [...prev, {
-                ...created,
+            const data = await res.json()
+            const created = data.product
+
+            const newRow = {
+                id: created.id,
+                name: created.name,
+                description: created.description,
+                price: created.price,
+                quantity: created.quantity,
+                sku: created.sku,
                 category: categories.find(c => c.id === created.categoryId)?.name || null,
-                Available: created.isActive
-            }])
+                isActive: created.isActive,
+            }
+
+            setRows(prev => [...prev, newRow])
             toast.success("Product created successfully!")
+            setOpenDialog(false)
             setNewProduct({
                 name: "",
                 description: "",
@@ -301,9 +333,8 @@ export function ProductTable() {
                 quantity: 0,
                 sku: "",
                 categoryId: 0,
-                Available: true,
+                isActive: true,
             })
-            setOpenDialog(false)
         } catch (err) {
             console.error(err)
             toast.error("Failed to create product")
@@ -319,7 +350,6 @@ export function ProductTable() {
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Products</h2>
 
-                {/* 🟢 Create Product Dialog */}
                 <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                     <DialogTrigger asChild>
                         <Button variant="outline" size="sm">
@@ -362,10 +392,7 @@ export function ProductTable() {
                                     id="price"
                                     value={isNaN(newProduct.price) ? "" : newProduct.price}
                                     onChange={e =>
-                                        setNewProduct(prev => ({
-                                            ...prev,
-                                            price: parseFloat(e.target.value) || 0,
-                                        }))
+                                        setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))
                                     }
                                 />
                             </div>
@@ -377,29 +404,41 @@ export function ProductTable() {
                                     id="quantity"
                                     value={isNaN(newProduct.quantity) ? "" : newProduct.quantity}
                                     onChange={e =>
-                                        setNewProduct(prev => ({
-                                            ...prev,
-                                            quantity: parseInt(e.target.value) || 0,
-                                        }))
+                                        setNewProduct(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))
                                     }
                                 />
                             </div>
 
+                            {/* SKU input (read-only) */}
                             <div className="flex flex-col gap-1">
                                 <Label htmlFor="sku">SKU</Label>
                                 <Input
                                     id="sku"
                                     placeholder="Stock Keeping Unit"
                                     value={newProduct.sku}
-                                    onChange={e => setNewProduct(prev => ({ ...prev, sku: e.target.value }))}
+                                    readOnly
+                                    className="bg-gray-100 text-center"
                                 />
                             </div>
 
+                            {/* Category select */}
                             <div className="flex flex-col gap-1">
                                 <Label htmlFor="category">Category</Label>
                                 <Select
                                     value={newProduct.categoryId ? newProduct.categoryId.toString() : ""}
-                                    onValueChange={val => setNewProduct(prev => ({ ...prev, categoryId: parseInt(val) }))}
+                                    onValueChange={val => {
+                                        const categoryId = parseInt(val)
+                                        const categoryName = categories.find(c => c.id === categoryId)?.name || ""
+                                        // Generate SKU automatically
+                                        const randomNumber = Math.floor(1000 + Math.random() * 9000)
+                                        const newSku = `${categoryName.slice(0, 3).toUpperCase()}-${randomNumber}`
+
+                                        setNewProduct(prev => ({
+                                            ...prev,
+                                            categoryId,
+                                            sku: newSku
+                                        }))
+                                    }}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select Category" />
@@ -411,7 +450,6 @@ export function ProductTable() {
                                     </SelectContent>
                                 </Select>
                             </div>
-
                         </div>
 
                         <DialogFooter>
