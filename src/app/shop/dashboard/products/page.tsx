@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import * as React from "react"
@@ -80,6 +82,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import Image from "next/image"
 
 // 🧾 Product Schema
 export const productSchema = z.object({
@@ -91,6 +94,7 @@ export const productSchema = z.object({
     sku: z.string().nullable(),
     category: z.string().nullable(),
     isActive: z.boolean(),
+    image: z.string().nullable(),
 })
 
 // Drag handle
@@ -99,7 +103,6 @@ function DragHandle({ id }: { id: number }) {
     return (
         <Button {...attributes} {...listeners} variant="ghost" size="icon" className="text-muted-foreground hover:bg-transparent">
             <IconGripVertical />
-            <span className="sr-only">Drag to reorder</span>
         </Button>
     )
 }
@@ -117,6 +120,15 @@ function ProductDrawer({ product }: { product: z.infer<typeof productSchema> }) 
                     <DrawerDescription>{product.description || "No description available."}</DrawerDescription>
                 </DrawerHeader>
                 <div className="px-4 pb-4">
+                    {product.image && (
+                        <Image
+                            src={product.image}
+                            alt={product.name}
+                            className="h-32 w-32 object-cover rounded mb-2"
+                            width={100}
+                            height={100}
+                        />
+                    )}
                     <div className="text-sm mb-2">Category: {product.category || "N/A"}</div>
                     <div className="text-sm mb-2">SKU: {product.sku || "N/A"}</div>
                     <div className="text-sm mb-2">Quantity: {product.quantity}</div>
@@ -124,7 +136,7 @@ function ProductDrawer({ product }: { product: z.infer<typeof productSchema> }) 
                     <Separator className="my-4" />
                     <div className="text-sm">This drawer shows detailed info for the selected product.</div>
                 </div>
-                <DrawerFooter className="flex gap-2">
+                <DrawerFooter>
                     <Button>Update</Button>
                     <DrawerClose asChild>
                         <Button variant="outline">Close</Button>
@@ -136,73 +148,7 @@ function ProductDrawer({ product }: { product: z.infer<typeof productSchema> }) 
 }
 
 // Table columns
-const columns: ColumnDef<z.infer<typeof productSchema>>[] = [
-    { id: "drag", header: () => null, cell: ({ row }) => <DragHandle id={row.original.id} /> },
-    {
-        id: "select",
-        header: ({ table }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} />
-            </div>
-        ),
-    },
-    { accessorKey: "name", header: "Product Name", cell: ({ row }) => <ProductDrawer product={row.original} /> },
-    { accessorKey: "category", header: "Category", cell: ({ row }) => <Badge variant="outline">{row.original.category || "N/A"}</Badge> },
-    {
-        accessorKey: "price",
-        header: "Price (₹) per unit",
-        cell: ({ row }) => (
-            <div className="h-10 w-24 text-center dark:bg-zinc-800 rounded-lg px-2 flex items-center justify-center font-medium dark:text-white dark:hover:bg-zinc-700 transition-colors">
-                ₹{row.original.price}
-            </div>
-        ),
-    },
-    {
-        accessorKey: "quantity",
-        header: "Quantity",
-        cell: ({ row }) => (
-            <div className="h-10 w-24 text-center dark:bg-zinc-800 rounded-lg px-2 flex items-center justify-center font-medium dark:text-white dark:hover:bg-zinc-700 transition-colors">
-                {row.original.quantity}
-            </div>
-        ),
-    },
-    {
-        accessorKey: "isActive",
-        header: "Status",
-        cell: ({ row }) => (
-            <Badge variant="outline" className="flex items-center gap-1">
-                {row.original.isActive ? <IconCircleCheckFilled className="fill-green-500" /> : <IconLoader />}
-                {row.original.isActive ? "Available" : "Unavailable"}
-            </Badge>
-        ),
-    },
-    {
-        id: "actions",
-        cell: () => (
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost">
-                        <IconDotsVertical />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        ),
-    },
-]
+
 
 // Draggable row
 function DraggableRow({ row }: { row: Row<z.infer<typeof productSchema>> }) {
@@ -223,7 +169,9 @@ export function ProductTable() {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [loading, setLoading] = React.useState(true)
     const [openDialog, setOpenDialog] = React.useState(false)
-    const [newProduct, setNewProduct] = React.useState({
+    const [createLoading, setCreateLoading] = React.useState(false)
+
+    const initialProduct = {
         name: "",
         description: "",
         price: 0,
@@ -231,51 +179,220 @@ export function ProductTable() {
         sku: "",
         categoryId: 0,
         isActive: true,
-    })
-    const [createLoading, setCreateLoading] = React.useState(false)
+        image: "",
+        fileName: "",
+        file: undefined as File | undefined, // Add file property
+    }
 
-    // Fetch products and categories
+    const [newProduct, setNewProduct] = React.useState<typeof initialProduct>(initialProduct)
+
     React.useEffect(() => {
         const fetchData = async () => {
             try {
                 const [resShop, resCategories] = await Promise.all([
                     fetch("http://localhost:5000/api/shop/me", { credentials: "include" }),
                     fetch("http://localhost:5000/api/category")
-                ])
+                ]);
 
-                const dataShop = await resShop.json()
-                const dataCategories = await resCategories.json()
+                const dataShop = await resShop.json();
+                const dataCategories = await resCategories.json();
+                const dataProducts = dataShop.shop?.products || [];
 
-                const dataProducts = dataShop.shop?.products || []
+                const parsedProducts = dataProducts.map((p: any) => {
+                    // Find category object by p.categoryId
+                    const categoryObj = dataCategories.find((c: any) => c.id === p.categoryId)
+                    const categoryName = categoryObj?.name || "N/A"
 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const parsedProducts = dataProducts.map((p: any) => ({
-                    id: p.id,
-                    name: p.name,
-                    description: p.description,
-                    price: p.price,
-                    quantity: p.quantity,
-                    sku: p.sku,
-                    category: p.category?.name || null,
-                    isActive: !!p.isActive,
-                }))
+                    // Get image: prefer thumbnail if exists
+                    const imageUrl = p.images?.find((img: any) => img.isThumbnail)?.url || p.image || null;
 
-                setRows(parsedProducts)
-                setCategories(dataCategories)
+                    return {
+                        id: p.id,
+                        name: p.name,
+                        description: p.description,
+                        price: p.price,
+                        quantity: p.quantity,
+                        sku: p.sku,
+                        category: categoryName, // <-- set category string
+                        isActive: !!p.isActive,
+                        image: imageUrl,
+                    };
+                });
+
+
+                setRows(parsedProducts);
+                setCategories(dataCategories);
             } catch (error) {
-                console.error(error)
+                console.error(error);
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        }
-        fetchData()
-    }, [])
+        };
 
-    const sensors = useSensors(
-        useSensor(MouseSensor),
-        useSensor(TouchSensor),
-        useSensor(KeyboardSensor)
-    )
+        fetchData();
+    }, []);
+
+    const handleCreateProduct = async () => {
+        if (!newProduct.file) {
+            toast.error("Please select an image")
+            return
+        }
+
+        setCreateLoading(true)
+        try {
+            // STEP 1: Create product without image
+            const productData = { ...newProduct, image: "" }
+            const res = await fetch("http://localhost:5000/api/product", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(productData),
+                credentials: "include",
+            })
+
+            if (!res.ok) throw new Error("Failed to create product")
+
+            const createdProductRes = await res.json()
+            const createdProduct = createdProductRes.newProduct // ✅ extract the actual product
+            console.log(createdProduct);
+            if (!createdProduct?.id) throw new Error("Product ID not returned from API")
+
+            // STEP 2: Upload image
+            const formData = new FormData()
+            formData.append("image", newProduct.file)
+            formData.append("productId", String(createdProduct.id))
+            formData.append("isThumbnail", "true")
+
+            const uploadRes = await fetch("http://localhost:5000/api/upload/image", {
+                method: "POST",
+                body: formData,
+                credentials: "include",
+            })
+
+            if (!uploadRes.ok) {
+                const errData = await uploadRes.json()
+                throw new Error(errData.error || "Image upload failed")
+            }
+
+            const uploadData = await uploadRes.json()
+            const imageUrl = uploadData.productImage.url
+
+            // Find category name from categories array
+            const categoryName = categories.find(c => c.id === createdProduct.categoryId)?.name || "N/A"
+
+            // Update table immediately
+            setRows(prev => [
+                ...prev,
+                { ...createdProduct, image: imageUrl, category: categoryName }
+            ])
+
+            toast.success("Product created successfully!")
+            setOpenDialog(false)
+            setNewProduct(initialProduct)
+        } catch (err) {
+            console.error(err)
+            toast.error((err as Error).message)
+        } finally {
+            setCreateLoading(false)
+        }
+    }
+
+    const handleUploadImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        const preview = URL.createObjectURL(file)
+        setNewProduct(prev => ({
+            ...prev,
+            image: preview,
+            file,
+            fileName: file.name,
+        }))
+    }
+
+    async function deleteProduct(id: number) {
+        try {
+            const res = await fetch(`http://localhost:5000/api/product/${id}`, {
+                method: "DELETE",
+            });
+            if (!res.ok) throw new Error("Failed to delete product");
+            setRows((prev) => prev.filter((p) => p.id !== id));
+            toast.success("Product deleted successfully!");
+        } catch (err) {
+            console.error(err);
+            toast.error("Something went wrong while deleting product");
+        }
+    }
+
+    React.useEffect(() => {
+        if (!openDialog) setNewProduct(initialProduct)
+    }, [openDialog])
+
+    const columns: ColumnDef<z.infer<typeof productSchema>>[] = [
+        { id: "drag", header: () => null, cell: ({ row }) => <DragHandle id={row.original.id} /> },
+        {
+            id: "select",
+            header: ({ table }) => (
+                <div className="flex items-center justify-center">
+                    <Checkbox
+                        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+                        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    />
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center">
+                    <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} />
+                </div>
+            ),
+        },
+        {
+            accessorKey: "image", header: "Image", cell: ({ row }) => (
+                row.original.image ? (
+                    <Image src={row.original.image} alt={row.original.name} className="h-12 w-12 object-cover rounded" width={100} height={100} />
+                ) : (
+                    <div className="h-12 w-12 bg-gray-200 flex items-center justify-center rounded text-gray-500">No Image</div>
+                )
+            )
+        },
+        { accessorKey: "name", header: "Product Name", cell: ({ row }) => <ProductDrawer product={row.original} /> },
+        { accessorKey: "category", header: "Category", cell: ({ row }) => <Badge variant="outline">{row.original.category || "N/A"}</Badge> },
+        { accessorKey: "price", header: "Price (₹)", cell: ({ row }) => <>₹{row.original.price}</> },
+        { accessorKey: "quantity", header: "Qty", cell: ({ row }) => <>{row.original.quantity}</> },
+        {
+            accessorKey: "isActive",
+            header: "Status",
+            cell: ({ row }) => (
+                <Badge variant="outline" className="flex items-center gap-1">
+                    {row.original.isActive ? <IconCircleCheckFilled className="fill-green-500" /> : <IconLoader />}
+                    {row.original.isActive ? "Available" : "Unavailable"}
+                </Badge>
+            ),
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost">
+                            <IconDotsVertical />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-32">
+                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            className="text-destructive cursor-pointer"
+                            onClick={() => deleteProduct(row.original.id)}
+                        >
+                            Delete
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            ),
+        },
+    ]
+
+    const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor), useSensor(KeyboardSensor))
 
     const table = useReactTable({
         data: rows,
@@ -298,50 +415,10 @@ export function ProductTable() {
         }
     }
 
-    const handleCreateProduct = async () => {
-        setCreateLoading(true)
-        try {
-            const res = await fetch("http://localhost:5000/api/product", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(newProduct),
-                credentials: "include",
-            })
+    // --- CREATE PRODUCT ---
 
-            if (!res.ok) throw new Error("Failed to create product")
-            const data = await res.json()
-            const created = data.product
 
-            const newRow = {
-                id: created.id,
-                name: created.name,
-                description: created.description,
-                price: created.price,
-                quantity: created.quantity,
-                sku: created.sku,
-                category: categories.find(c => c.id === created.categoryId)?.name || null,
-                isActive: created.isActive,
-            }
 
-            setRows(prev => [...prev, newRow])
-            toast.success("Product created successfully!")
-            setOpenDialog(false)
-            setNewProduct({
-                name: "",
-                description: "",
-                price: 0,
-                quantity: 0,
-                sku: "",
-                categoryId: 0,
-                isActive: true,
-            })
-        } catch (err) {
-            console.error(err)
-            toast.error("Failed to create product")
-        } finally {
-            setCreateLoading(false)
-        }
-    }
 
     if (loading) return <div className="text-center mt-3">Loading products...</div>
 
@@ -349,106 +426,80 @@ export function ProductTable() {
         <div className="w-full p-4">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Products</h2>
-
                 <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                     <DialogTrigger asChild>
                         <Button variant="outline" size="sm">
                             <IconPlus className="mr-1" /> Add Product
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Create Product</DialogTitle>
-                            <DialogDescription>
-                                Fill the details to add a new product.
-                            </DialogDescription>
+                            <DialogDescription>Fill in the details below.</DialogDescription>
                         </DialogHeader>
 
-                        <div className="grid gap-3 py-2">
-                            <div className="flex flex-col gap-1">
-                                <Label htmlFor="name">Name</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <Label>Name</Label>
+                                <Input placeholder="Product name" value={newProduct.name}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))} />
+
+                                <Label>Description</Label>
+                                <Input placeholder="Product description" value={newProduct.description}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, description: e.target.value }))} />
+
+                                <Label>Price</Label>
                                 <Input
-                                    id="name"
-                                    placeholder="Product name"
-                                    value={newProduct.name}
-                                    onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                                    type="number"
+                                    value={newProduct.price || ""}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, price: e.target.value === "" ? 0 : parseFloat(e.target.value) }))}
+                                />
+
+                                <Label>Quantity</Label>
+                                <Input
+                                    type="number"
+                                    value={newProduct.quantity || ""}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, quantity: e.target.value === "" ? 0 : parseInt(e.target.value) }))}
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-1">
-                                <Label htmlFor="description">Description</Label>
-                                <Input
-                                    id="description"
-                                    placeholder="Product description"
-                                    value={newProduct.description}
-                                    onChange={e => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
-                                />
-                            </div>
+                            <div className="flex flex-col gap-2">
+                                <Label>SKU</Label>
+                                <Input readOnly placeholder="Auto-generated" value={newProduct.sku} />
 
-                            <div className="flex flex-col gap-1">
-                                <Label htmlFor="price">Price</Label>
-                                <Input
-                                    type="text"
-                                    id="price"
-                                    value={isNaN(newProduct.price) ? "" : newProduct.price}
-                                    onChange={e =>
-                                        setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))
-                                    }
-                                />
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                                <Label htmlFor="quantity">Quantity</Label>
-                                <Input
-                                    type="text"
-                                    id="quantity"
-                                    value={isNaN(newProduct.quantity) ? "" : newProduct.quantity}
-                                    onChange={e =>
-                                        setNewProduct(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))
-                                    }
-                                />
-                            </div>
-
-                            {/* SKU input (read-only) */}
-                            <div className="flex flex-col gap-1">
-                                <Label htmlFor="sku">SKU</Label>
-                                <Input
-                                    id="sku"
-                                    placeholder="Stock Keeping Unit"
-                                    value={newProduct.sku}
-                                    readOnly
-                                    className="bg-gray-100 text-center"
-                                />
-                            </div>
-
-                            {/* Category select */}
-                            <div className="flex flex-col gap-1">
-                                <Label htmlFor="category">Category</Label>
+                                <Label>Category</Label>
                                 <Select
                                     value={newProduct.categoryId ? newProduct.categoryId.toString() : ""}
                                     onValueChange={val => {
                                         const categoryId = parseInt(val)
                                         const categoryName = categories.find(c => c.id === categoryId)?.name || ""
-                                        // Generate SKU automatically
-                                        const randomNumber = Math.floor(1000 + Math.random() * 9000)
-                                        const newSku = `${categoryName.slice(0, 3).toUpperCase()}-${randomNumber}`
-
-                                        setNewProduct(prev => ({
-                                            ...prev,
-                                            categoryId,
-                                            sku: newSku
-                                        }))
+                                        const newSku = `${categoryName.slice(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`
+                                        setNewProduct(prev => ({ ...prev, categoryId, sku: newSku }))
                                     }}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Category" />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
                                     <SelectContent>
-                                        {categories.map(c => (
-                                            <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                                        ))}
+                                        {categories.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
+
+                                <Label>Product Image</Label>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1 relative border rounded-lg px-3 py-2 light:bg-white light:hover:bg-gray-50 transition">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleUploadImage}
+                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        />
+                                        <span className="text-gray-600 truncate pointer-events-none">{newProduct.fileName || "Click to select image"}</span>
+                                    </div>
+                                    {newProduct.image && (
+                                        <div className="shrink-0 w-24 h-24 border rounded-lg overflow-hidden shadow-sm">
+                                            <Image src={newProduct.image} alt="Preview" width={96} height={96} className="object-cover w-full h-full" />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
