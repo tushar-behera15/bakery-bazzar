@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface Product {
     id: number;
@@ -25,6 +26,36 @@ export default function ProductsPage() {
     const [shops, setShops] = useState<Shop[]>([]);
     const [query, setQuery] = useState("");
     const [loading, setLoading] = useState(true);
+    const [addingId, setAddingId] = useState<number | null>(null);
+
+    const handleAddToCart = async (productId: number) => {
+        try {
+            setAddingId(productId);
+
+            const res = await fetch("http://localhost:5000/api/cart", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include", // ✅ send JWT cookie
+                body: JSON.stringify({
+                    productId,
+                    quantity: 1,
+                }),
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || "Failed to add to cart");
+            }
+
+            toast.success("Added to cart");
+        } catch (error) {
+            console.error("Add to cart failed:", error);
+        } finally {
+            setAddingId(null);
+        }
+    };
 
     useEffect(() => {
         const fetchShops = async () => {
@@ -136,10 +167,14 @@ export default function ProductsPage() {
                                                 </div>
                                                 <Button
                                                     size="sm"
-                                                    className="w-full flex gap-2 items-center mt-3 bg-primary text-white hover:bg-primary/90 transition-colors"
+                                                    disabled={addingId === product.id}
+                                                    onClick={() => handleAddToCart(product.id)}
+                                                    className="w-full flex gap-2 items-center mt-3 bg-primary text-white hover:bg-primary/90 disabled:opacity-60"
                                                 >
-                                                    <ShoppingCart className="h-4 w-4" /> Add to Cart
+                                                    <ShoppingCart className="h-4 w-4" />
+                                                    {addingId === product.id ? "Adding..." : "Add to Cart"}
                                                 </Button>
+
                                             </div>
                                         </div>
                                     </div>
