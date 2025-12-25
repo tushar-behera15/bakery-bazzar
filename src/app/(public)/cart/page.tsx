@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { emitCartUpdate } from "@/utils/cartEvents";
 
 interface CartItem {
     id: number;
@@ -40,7 +41,7 @@ export default function CartPage() {
             if (!res.ok) throw new Error("Failed to load cart");
 
             const data = await res.json();
-            setCart(data);
+            setCart(data.items);
         } catch (err) {
             console.error(err);
             toast.error("Failed to load cart");
@@ -70,6 +71,7 @@ export default function CartPage() {
                     item.id === cartId ? { ...item, quantity } : item
                 )
             );
+            emitCartUpdate();
         } catch {
             toast.error("Failed to update quantity");
         }
@@ -84,6 +86,7 @@ export default function CartPage() {
             });
 
             setCart((prev) => prev.filter((item) => item.id !== cartId));
+            emitCartUpdate();
             toast.success("Item removed");
         } catch {
             toast.error("Failed to remove item");

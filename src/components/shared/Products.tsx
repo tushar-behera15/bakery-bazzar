@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { emitCartUpdate } from "@/utils/cartEvents";
 
 interface Product {
     id: number;
@@ -48,7 +49,7 @@ export default function ProductsPage() {
                 const err = await res.json();
                 throw new Error(err.message || "Failed to add to cart");
             }
-
+            emitCartUpdate();
             toast.success("Added to cart");
         } catch (error) {
             console.error("Add to cart failed:", error);
