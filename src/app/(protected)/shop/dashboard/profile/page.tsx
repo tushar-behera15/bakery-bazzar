@@ -48,7 +48,7 @@ export default function OwnerProfilePage() {
 
         fetchMyShop();
     }, []);
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div className="text-center">Loading...</div>;
     if (!shop) return <div>No shop found</div>;
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-6">

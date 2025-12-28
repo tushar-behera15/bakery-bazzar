@@ -25,16 +25,16 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
+
                 <ProgressBar className="bg-primary/60 h-1">
                     <Toaster position="top-center" richColors />
 
                     {children}
                 </ProgressBar>
-
             </body>
         </html>
     );

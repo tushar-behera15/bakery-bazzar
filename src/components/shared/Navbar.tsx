@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
 import { ProgressBarLink } from "./ProgressLink";
+import { ModeToggle } from "../dashboard-stuffs/mode-toggle";
 
 interface UserType {
     name?: string;
@@ -210,6 +211,7 @@ const Navbar = () => {
 
                                 </Button>
                             </ProgressBarLink >
+                            <ModeToggle />
 
                             {/* Hamburger (mobile) */}
                             <Button
@@ -261,7 +263,6 @@ const Navbar = () => {
                             {label}
                         </ProgressBarLink >
                     ))}
-
                     <div className="my-4 border-t border-border"></div>
 
                     {loading ? (
