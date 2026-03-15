@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, Clock, Shield, Sparkles, ShoppingCart } from "lucide-react";
+import { ArrowRight, Clock, Shield, Sparkles, ShoppingCart, Star, Zap, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-bakery.jpg";
 import middleImage from "@/assets/hero-section.jpg";
@@ -12,6 +12,9 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/components/shared/Footer";
+import SectionTitle from "@/components/shared/SectionTitle";
+import GlassCard from "@/components/ui/glass-card";
+import { cn } from "@/lib/utils";
 
 const HomePage = () => {
     const shops = [
@@ -19,26 +22,28 @@ const HomePage = () => {
             id: 1,
             name: "XQZ Bakery",
             logo: croissantImage,
-            tagline: "Fresh breads & pastries every day",
+            tagline: "Artisan breads & specialty pastries",
+            rating: 4.8,
             products: [
                 { id: 1, name: "Sourdough Bread", price: 80, image: breadImage, category: "bread" },
-                { id: 2, name: "Butter Croissant", price: 100, image: croissantImage, category: "bread" },
+                { id: 2, name: "Butter Croissant", price: 100, image: croissantImage, category: "pastry" },
                 { id: 3, name: "Chocolate Pastry", price: 120, image: macaronsImage, category: "pastry" },
-                { id: 4, name: "Almond Croissant", price: 130, image: croissantImage, category: "bread" },
-                { id: 5, name: "Pain au Chocolat", price: 150, image: breadImage, category: "cake" },
+                { id: 4, name: "Almond Croissant", price: 130, image: croissantImage, category: "pastry" },
+                { id: 5, name: "Pain au Chocolat", price: 150, image: breadImage, category: "pastry" },
             ],
         },
         {
             id: 2,
             name: "Sweet Crumbs",
             logo: cakeImage,
-            tagline: "Cakes, muffins, and desserts",
+            tagline: "Bespoke cakes and gourmet desserts",
+            rating: 4.9,
             products: [
                 { id: 6, name: "Strawberry Cake", price: 350, image: cakeImage, category: "cake" },
                 { id: 7, name: "Blueberry Muffin", price: 90, image: macaronsImage, category: "pastry" },
                 { id: 8, name: "Vanilla Cupcake", price: 70, image: croissantImage, category: "cake" },
                 { id: 9, name: "Chocolate Brownie", price: 110, image: cakeImage, category: "pastry" },
-                { id: 10, name: "Lemon Tart", price: 150, image: macaronsImage, category: "bread" },
+                { id: 10, name: "Lemon Tart", price: 150, image: macaronsImage, category: "pastry" },
             ],
         },
     ];
@@ -58,136 +63,193 @@ const HomePage = () => {
     }, []);
 
     return (
-        <div className="min-h-full flex flex-col">
+        <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
 
             {/* Hero Section */}
-            <section className="relative overflow-hidden bg-gradient-hero py-20 lg:py-28">
+            <section className="relative pt-32 pb-16 lg:pt-48 lg:pb-24 overflow-hidden mesh-gradient dark:mesh-gradient-dark">
+                {/* Background Decor */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full -z-10">
+                    <div className="absolute top-[-5%] left-[-5%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+                    <div className="absolute bottom-[0%] right-[-5%] w-[40%] h-[40%] bg-accent/15 rounded-full blur-[100px] animate-pulse delay-700" />
+                </div>
+
                 <div className="container mx-auto px-4">
-                    <div className="grid lg:grid-cols-2 gap-12 items-center">
-
-                        {/* Left Content */}
-                        <div className="space-y-6 lg:space-y-8">
-                            <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold inline-block">
-                                ✨ Fresh Daily Since 2025
-                            </span>
-                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
-                                <span className="bg-linear-to-r from-primary to-secondary-foreground bg-clip-text text-transparent">
-                                    Warm, Fresh, Irresistible
-                                </span>
-                                <br />
-                                Straight to Your Door
-
+                    <div className="max-w-4xl mx-auto text-center space-y-10">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                            <Zap className="h-3.5 w-3.5 fill-current" />
+                            <span>Premium Bakery Marketplace</span>
+                        </div>
+                        
+                        <div className="space-y-6">
+                            <h1 className="text-6xl md:text-8xl lg:text-[9rem] font-black tracking-tighter leading-[0.85] text-foreground animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+                                Freshly <br />
+                                <span className="text-primary italic font-serif relative">
+                                    Baked
+                                    <span className="absolute -bottom-2 md:-bottom-4 left-0 w-full h-2 md:h-4 bg-primary/10 -skew-x-12 -z-10 opacity-50" />
+                                </span> 
+                                <span className="text-foreground"> Joy</span>
                             </h1>
-                            <p className="text-lg sm:text-xl lg:text-2xl text-muted-foreground max-w-lg">
-                                Discover handcrafted baked goods made with love and delivered fresh every day. Sweet, savory, and always delightful.
+                            
+                            <p className="text-lg md:text-xl text-muted-foreground font-semibold max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500 text-balance">
+                                Discover artisan breads, gourmet pastries, and bespoke cakes from the finest local bakeries, delivered directly to your door.
                             </p>
-                            <div className="flex flex-wrap gap-4 mt-4">
-                                <Link href="/products">
-                                    <Button
-                                        size="lg"
-                                        className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-soft hover:shadow-hover transition-all"
-                                    >
-                                        Browse Products
-                                        <ArrowRight className="h-5 w-5" />
-                                    </Button>
-                                </Link>
-                                <Link href="/about">
-                                    <Button size="lg" variant="outline" className="gap-2 text-primary border-primary hover:bg-primary/10">
-                                        Learn More
-                                    </Button>
-                                </Link>
-                            </div>
                         </div>
 
-                        {/* Right Image */}
-                        <div className="relative w-full lg:w-auto">
-                            <div className="aspect-video rounded-3xl overflow-hidden shadow-xl relative">
-                                <Image
-                                    src={heroImage}
-                                    alt="Freshly baked treats"
-                                    fill
-                                    priority
-                                    quality={100}
-                                    className="object-cover rounded-3xl"
-                                />
-                            </div>
-                            <div className="absolute -bottom-8 -left-8 w-32 sm:w-36 h-32 sm:h-36 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-                            <div className="absolute -top-8 -right-8 w-32 sm:w-36 h-32 sm:h-36 bg-secondary/20 rounded-full blur-3xl animate-pulse" />
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-700">
+                            <Link href="/products" className="w-full sm:w-auto">
+                                <Button
+                                    size="lg"
+                                    className="h-16 px-10 text-lg font-black rounded-2xl gap-3 shadow-premium hover:shadow-2xl hover:-translate-y-1.5 transition-all w-full bg-primary text-primary-foreground group"
+                                >
+                                    Explore Menu
+                                    <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                            </Link>
+                            <Link href="/about" className="w-full sm:w-auto">
+                                <Button 
+                                    size="lg" 
+                                    variant="outline" 
+                                    className="h-16 px-10 text-lg font-black rounded-2xl border-2 hover:bg-muted/50 transition-all w-full"
+                                >
+                                    Our Story
+                                </Button>
+                            </Link>
                         </div>
-
                     </div>
+                </div>
+            </section>
 
-                    {/* Features */}
-                    <div className="flex justify-center items-center gap-12 py-12 flex-wrap mt-12">
-                        {[{ icon: Clock, text: "Fresh Daily" }, { icon: Shield, text: "Quality Assured" }, { icon: Sparkles, text: "Handcrafted" }].map((feature, idx) => (
-                            <div className="text-center hover:scale-105 transition-transform duration-300" key={idx}>
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-3">
-                                    <feature.icon className="h-7 w-7 text-primary" />
+            {/* Statistics Section */}
+            <section className="py-20 relative z-20 -mt-10">
+                <div className="container mx-auto px-4">
+                    <GlassCard className="p-10 md:p-14 border-primary/10 shadow-premium">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8">
+                            {[
+                                { label: "Artisan Bakers", value: "50+", icon: Clock },
+                                { label: "Daily Deliveries", value: "1.2k", icon: Zap },
+                                { label: "Happy Customes", value: "10k+", icon: Star },
+                                { label: "Product Varieties", value: "400+", icon: Sparkles },
+                            ].map((stat, idx) => (
+                                <div key={idx} className="flex flex-col items-center text-center space-y-2">
+                                    <div className="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary mb-2">
+                                        <stat.icon className="h-6 w-6" />
+                                    </div>
+                                    <p className="text-4xl md:text-5xl font-black tracking-tighter text-foreground">{stat.value}</p>
+                                    <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">{stat.label}</p>
                                 </div>
-                                <p className="text-base font-semibold text-foreground">{feature.text}</p>
-                            </div>
+                            ))}
+                        </div>
+                    </GlassCard>
+                </div>
+            </section>
+
+            {/* Features section with a modern cards layout */}
+            <section className="py-24 bg-muted/20">
+                <div className="container mx-auto px-4">
+                    <div className="grid md:grid-cols-3 gap-10">
+                        {[
+                            { 
+                                icon: Clock, 
+                                title: "Fresh Every Morning", 
+                                desc: "Our bakers start before the sun rises to ensure you get the freshest treats possible.",
+                                color: "bg-blue-500/10 text-blue-600"
+                            },
+                            { 
+                                icon: Shield, 
+                                title: "Artisan Quality", 
+                                desc: "No preservatives, no shortcuts. Just pure, high-quality ingredients made with passion.",
+                                color: "bg-primary/10 text-primary"
+                            },
+                            { 
+                                icon: Sparkles, 
+                                title: "Handcrafted Love", 
+                                desc: "Each item is crafted by hand, giving it a unique touch that machine-made goods lack.",
+                                color: "bg-accent/20 text-accent-foreground"
+                            }
+                        ].map((feature, idx) => (
+                            <GlassCard key={idx} className="p-10 group hover:bg-card border-none shadow-none hover:shadow-premium transition-all">
+                                <div className={cn("w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-8 transition-transform group-hover:rotate-12", feature.color)}>
+                                    <feature.icon className="h-8 w-8" />
+                                </div>
+                                <h3 className="text-2xl font-black mb-4 tracking-tight">{feature.title}</h3>
+                                <p className="text-muted-foreground font-semibold leading-relaxed">
+                                    {feature.desc}
+                                </p>
+                            </GlassCard>
                         ))}
                     </div>
                 </div>
             </section>
 
-
-            {/* Shops Section with Carousel */}
-            <section className="py-12 md:py-16 lg:py-20 bg-background overflow-x-hidden">
+            {/* Shops Section */}
+            <section className="py-24 md:py-32">
                 <div className="container mx-auto px-4">
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mb-10 md:mb-12">Featured Bakeries</h2>
+                    <SectionTitle 
+                        title="Featured Bakeries" 
+                        subtitle="We've partnered with the best local artisans to bring you high-quality baked goods." 
+                    />
 
                     {shops.map((shop) => (
-                        <div key={shop.id} className="mb-12 md:mb-16">
+                        <div key={shop.id} className="mb-24 last:mb-0">
                             {/* Shop Header */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-                                <div className="flex items-center gap-4">
-                                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-gray-200 shadow-sm">
+                            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+                                <div className="flex items-center gap-6">
+                                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-border shadow-soft shrink-0">
                                         <Image src={shop.logo} alt={shop.name} fill className="object-cover" />
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl sm:text-2xl font-semibold">{shop.name}</h3>
-                                        <p className="text-muted-foreground text-sm">{shop.tagline}</p>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest">
+                                            <Star className="h-3.5 w-3.5 fill-current" />
+                                            <span>{shop.rating} Rated</span>
+                                        </div>
+                                        <h3 className="text-3xl font-black">{shop.name}</h3>
+                                        <p className="text-muted-foreground font-medium">{shop.tagline}</p>
                                     </div>
                                 </div>
                                 <Link href="/products">
-                                    <Button variant="outline" className="text-sm flex items-center gap-1 border-primary text-primary hover:bg-primary/10">
-                                        View All <ArrowRight className="h-4 w-4" />
+                                    <Button variant="ghost" className="font-bold group hover:text-primary">
+                                        View full menu 
+                                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                                     </Button>
                                 </Link>
                             </div>
 
-                            {/* Carousel */}
-                            <div className="flex gap-6 overflow-x-auto pb-3 hide-scrollbar">
+                            {/* Carousel / Scroll Area */}
+                            <div className="flex gap-6 overflow-x-auto pb-8 snap-x hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
                                 {shop.products.map((product) => (
-                                    <div key={product.id} className="min-w-[200px] sm:min-w-[240px] md:min-w-[260px] shrink-0 snap-start">
-                                        <div className="flex flex-col h-full bg-background rounded-2xl shadow-md hover:shadow-xl overflow-hidden transition-shadow">
-                                            {/* Image */}
-                                            <div className="relative w-full aspect-4/3">
+                                    <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center">
+                                        <GlassCard className="flex flex-col h-full group">
+                                            <div className="relative aspect-square overflow-hidden bg-muted/30">
                                                 <Image
                                                     src={product.image.src}
                                                     alt={product.name}
                                                     fill
-                                                    className="object-cover"
+                                                    className="object-cover transition-transform duration-700 group-hover:scale-110"
                                                 />
-                                                <span className="absolute top-2 left-2 bg-primary/80 text-primary-foreground text-xs font-semibold px-2 py-1 rounded-full">
-                                                    {product.category.toUpperCase()}
+                                                <span className="absolute top-4 left-4 bg-background px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                                    {product.category}
                                                 </span>
                                             </div>
-
-                                            {/* Info */}
-                                            <div className="p-4 flex flex-col justify-between flex-1">
-                                                <div className="mb-3">
-                                                    <h4 className="font-semibold text-lg">{product.name}</h4>
-                                                    <p className="text-lg sm:text-xl font-bold text-primary mt-1 text-left">₹{product.price}</p>
+                                            <div className="p-6 space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <h4 className="text-lg font-bold line-clamp-1">{product.name}</h4>
+                                                    <span className="text-xl font-black text-primary">₹{product.price}</span>
                                                 </div>
-                                                <Button size="sm" className="w-full flex gap-2 items-center mt-3 bg-primary text-primary-foreground hover:bg-primary/90">
+                                                <Button size="sm" className="w-full rounded-xl font-bold gap-2">
                                                     <ShoppingCart className="h-4 w-4" /> Add to Cart
                                                 </Button>
                                             </div>
-                                        </div>
+                                        </GlassCard>
                                     </div>
                                 ))}
+                                <div className="min-w-[200px] flex flex-col items-center justify-center snap-center">
+                                    <Link href="/products">
+                                        <div className="w-16 h-16 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary hover:text-primary transition-all group">
+                                            <ChevronRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+                                        </div>
+                                    </Link>
+                                    <p className="mt-4 font-bold text-muted-foreground">See More</p>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -196,58 +258,53 @@ const HomePage = () => {
 
             {/* CTA Section */}
             {!user && (
-                <section className="relative py-24 overflow-hidden">
-                    <div className="absolute inset-0">
-                        <Image
-                            src={middleImage}
-                            alt="Delicious Bakery"
-                            fill
-                            className="object-cover w-full h-full brightness-60"
-                            priority
-                        />
-                        <div className="absolute inset-0 bg-linear-to-r from-primary/60 via-transparent to-secondary/60" />
-                    </div>
+                <section className="py-24 md:py-32 px-4">
+                    <div className="container mx-auto">
+                        <div className="relative rounded-[3rem] overflow-hidden bg-foreground text-background shadow-2xl group/cta">
+                            {/* Background Image with Overlay */}
+                            <div className="absolute inset-0 z-0">
+                                <Image
+                                    src={middleImage}
+                                    alt="Bakery background"
+                                    fill
+                                    className="object-cover opacity-20 grayscale brightness-50 transition-transform duration-1000 group-hover/cta:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-linear-to-br from-primary/60 via-foreground/80 to-foreground" />
+                            </div>
 
-                    <div className="relative container mx-auto px-4 text-center text-white z-10">
-                        <div className="max-w-3xl mx-auto space-y-6">
-                            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold drop-shadow-lg">
-                                Ready to Treat Yourself?
-                            </h2>
-                            <p className="text-xl sm:text-2xl lg:text-3xl drop-shadow-md">
-                                Join us today and get fresh, handcrafted baked goods delivered straight to your door!
-                            </p>
-                            <div className="flex flex-wrap gap-4 sm:gap-6 justify-center mt-8">
-                                <Link href="/signup">
-                                    <Button
-                                        size="lg"
-                                        className="gap-3 bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl hover:bg-secondary/90 transform hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto"
-                                    >
-                                        Sign Up Now
-                                        <ArrowRight className="h-5 w-5" />
-                                    </Button>
-                                </Link>
-                                <Link href="/login">
-                                    <Button
-                                        size="lg"
-                                        variant="outline"
-                                        className="text-white border-white bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:text-white transition-all duration-300 w-full sm:w-auto"
-                                    >
-                                        Login
-                                    </Button>
-                                </Link>
+                            <div className="relative z-10 px-8 py-20 md:py-32 text-center max-w-3xl mx-auto space-y-12">
+                                <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9] animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                    Start Your Morning With Bakery Bazzar
+                                </h2>
+                                <p className="text-xl font-semibold opacity-70 leading-relaxed text-balance animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
+                                    Join thousands of food lovers who get fresh, artisan baked goods delivered straight to their doorstep every single day.
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-400">
+                                    <Link href="/signup" className="w-full sm:w-auto">
+                                        <Button
+                                            size="lg"
+                                            className="h-16 px-12 text-lg font-black bg-background text-foreground hover:bg-background/90 rounded-2xl w-full shadow-xl transition-all hover:-translate-y-1 hover:shadow-2xl"
+                                        >
+                                            Create Account
+                                        </Button>
+                                    </Link>
+                                    <Link href="/login" className="w-full sm:w-auto">
+                                        <Button
+                                            size="lg"
+                                            variant="outline"
+                                            className="h-16 px-12 text-lg font-black border-background/20 bg-background/5 hover:bg-background/10 text-background rounded-2xl w-full backdrop-blur-md transition-all hover:-translate-y-1"
+                                        >
+                                            Sign In
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
-
-                        {/* Floating Shapes */}
-                        <div className="absolute top-0 left-0 w-24 sm:w-32 h-24 sm:h-32 bg-yellow-300 rounded-full blur-3xl opacity-40 animate-pulse" />
-                        <div className="absolute bottom-0 right-0 w-32 sm:w-40 h-32 sm:h-40 bg-pink-300 rounded-full blur-3xl opacity-40 animate-pulse" />
                     </div>
                 </section>
             )}
 
-            {/* Footer */}
             <Footer />
-
         </div>
     );
 };

@@ -1,74 +1,136 @@
-import { Facebook, Instagram, Twitter, Mail, Phone } from "lucide-react";
+import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
-import logoImage from "@/assets/croissant.jpg";
+import { cn } from "@/lib/utils";
 
 const Footer = () => {
     return (
-        <footer className="bg-gray-900 text-gray-200 pt-16 relative">
-            <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
-
-                {/* About Section */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <Image src={logoImage} alt="Bakery Bazzar" width={40} height={40} className="rounded-full" />
-                        <h2 className="text-2xl font-bold text-white">Bakery Bazzar</h2>
-                    </div>
-                    <p className="text-gray-400">
-                        Bakery Bazzar is your one-stop destination for fresh, handcrafted baked goods delivered right to your door. Quality and freshness are our top priorities.
-                    </p>
-                    <div className="flex gap-3 mt-2">
-                        <a href="#" className="hover:text-white transition-colors"><Facebook className="h-5 w-5" /></a>
-                        <a href="#" className="hover:text-white transition-colors"><Instagram className="h-5 w-5" /></a>
-                        <a href="#" className="hover:text-white transition-colors"><Twitter className="h-5 w-5" /></a>
-                    </div>
-                </div>
-
-                {/* Quick Links */}
-                <div>
-                    <h3 className="text-xl font-semibold text-white mb-4">Quick Links</h3>
-                    <ul className="space-y-2">
-                        <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
-                        <li><Link href="/products" className="hover:text-white transition-colors">Products</Link></li>
-                        <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-                        <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-
-                    </ul>
-                </div>
-
-                {/* Products Links */}
-                <div>
-                    <h3 className="text-xl font-semibold text-white mb-4">Products</h3>
-                    <ul className="space-y-2">
-                        <li><Link href="/products#bread" className="hover:text-white transition-colors">Bread</Link></li>
-                        <li><Link href="/products#pastry" className="hover:text-white transition-colors">Pastries</Link></li>
-                        <li><Link href="/products#cake" className="hover:text-white transition-colors">Cakes</Link></li>
-                        <li><Link href="/products#cupcake" className="hover:text-white transition-colors">Cupcakes</Link></li>
-                    </ul>
-                </div>
-
-                {/* Contact Info */}
-                <div>
-                    <h3 className="text-xl font-semibold text-white mb-4">Contact Us</h3>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Mail className="h-5 w-5 text-primary" />
-                        <span className="text-gray-400">info@bakerybazzar.com</span>
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Phone className="h-5 w-5 text-primary" />
-                        <span className="text-gray-400">+91 98765 43210</span>
-                    </div>
-                    <p className="text-gray-400 mt-2">
-                        123 Bakery Street, Sweet City, India
-                    </p>
-                </div>
+        <footer className="bg-muted/30 border-t border-border/40 pt-24 pb-12 relative overflow-hidden">
+            {/* Background Decor */}
+            <div className="absolute top-0 left-0 w-full h-full -z-0 opacity-10 pointer-events-none">
+                <div className="absolute top-20 right-[-5%] w-96 h-96 bg-primary/20 rounded-full blur-[100px]" />
+                <div className="absolute bottom-10 left-[-5%] w-64 h-64 bg-accent/20 rounded-full blur-[80px]" />
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-gray-700 pt-3">
-                <p className="text-center text-gray-500 text-sm">
-                    &copy; {new Date().getFullYear()} Bakery Bazzar. All rights reserved.
-                </p>
+            <div className="container mx-auto px-4 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+
+                    {/* Brand Section */}
+                    <div className="space-y-6">
+                        <Link href="/" className="flex items-center gap-2 group">
+                            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                                <span className="text-xl">🥐</span>
+                            </div>
+                            <span className="text-2xl font-black tracking-tighter text-foreground">
+                                Bakery<span className="text-primary italic">Bazzar</span>
+                            </span>
+                        </Link>
+                        <p className="text-muted-foreground leading-relaxed max-w-xs font-medium">
+                            The marketplace for premium artisan baked goods. Connecting you with the finest local bakers since 2025.
+                        </p>
+                        <div className="flex gap-3">
+                            {[Facebook, Instagram, Twitter].map((Icon, idx) => (
+                                <a 
+                                    key={idx} 
+                                    href="#" 
+                                    className="w-10 h-10 rounded-xl bg-background border border-border/60 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all group"
+                                >
+                                    <Icon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Quick Links */}
+                    <div>
+                        <h3 className="text-sm font-black mb-6 uppercase tracking-[0.2em] text-foreground/80">Navigation</h3>
+                        <ul className="space-y-4">
+                            {[
+                                { name: "Home", href: "/" },
+                                { name: "Products", href: "/products" },
+                                { name: "About Us", href: "/about" },
+                                { name: "Contact", href: "/contact" }
+                            ].map((link) => (
+                                <li key={link.name}>
+                                    <Link 
+                                        href={link.href} 
+                                        className="text-muted-foreground hover:text-primary font-bold transition-all flex items-center group text-sm"
+                                    >
+                                        <ArrowRight className="h-3 w-3 mr-2 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                                        {link.name}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Categories */}
+                    <div>
+                        <h3 className="text-sm font-black mb-6 uppercase tracking-[0.2em] text-foreground/80">Categories</h3>
+                        <ul className="space-y-4">
+                            {[
+                                { name: "Artisan Bread", href: "/products#bread" },
+                                { name: "French Pastries", href: "/products#pastry" },
+                                { name: "Custom Cakes", href: "/products#cake" },
+                                { name: "Gourmet Cupcakes", href: "/products#cupcake" }
+                            ].map((link) => (
+                                <li key={link.name}>
+                                    <Link 
+                                        href={link.href} 
+                                        className="text-muted-foreground hover:text-primary font-bold transition-all flex items-center group text-sm"
+                                    >
+                                        <ArrowRight className="h-3 w-3 mr-2 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                                        {link.name}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="space-y-6">
+                        <h3 className="text-sm font-black mb-6 uppercase tracking-[0.2em] text-foreground/80">Connect</h3>
+                        <div className="space-y-4">
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center shrink-0">
+                                    <Mail className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Email Us</p>
+                                    <p className="font-bold text-sm">hello@bakerybazzar.com</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center shrink-0">
+                                    <Phone className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Call Us</p>
+                                    <p className="font-bold text-sm">+91 98765 43210</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center shrink-0">
+                                    <MapPin className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Visit Us</p>
+                                    <p className="font-bold text-sm">Sweet City, India</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Bar */}
+                <div className="mt-20 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
+                        &copy; {new Date().getFullYear()} Bakery Bazzar. Handcrafted with passion.
+                    </p>
+                    <div className="flex gap-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
+                        <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
+                    </div>
+                </div>
             </div>
         </footer>
     );
