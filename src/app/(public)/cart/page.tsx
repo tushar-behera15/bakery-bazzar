@@ -9,8 +9,12 @@ import { emitCartUpdate } from "@/utils/cartEvents";
 import { IconTrash, IconMinus, IconPlus, IconShoppingCart, IconReceipt2, IconTruck, IconPercentage } from "@tabler/icons-react";
 import GlassCard from "@/components/ui/glass-card";
 import SectionTitle from "@/components/shared/SectionTitle";
-import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import { Order } from "@/types/order";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
 
 interface CartItem {
     id: number;
@@ -26,6 +30,9 @@ interface CartItem {
 export default function CartPage() {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isPlacing, setIsPlacing] = useState(false);
+    const router = useRouter();
+    const { user } = useAuth();
 
     const fetchCart = async () => {
         try {
@@ -81,6 +88,39 @@ export default function CartPage() {
         }
     };
 
+    const handlePlaceOrder = async () => {
+        if (cart.length === 0) {
+            toast.error("Your cart is empty");
+            return;
+        }
+
+        if (!user?.id) {
+            toast.error("You must be logged in to place an order");
+            return;
+        }
+
+        setIsPlacing(true);
+        try {
+            const order = await api.post<Order>("/orders", {
+                buyerId: user.id, // Real buyer ID
+                addressId: 1, // Mock address ID
+                items: cart.map(i => ({
+                    productId: i.product.id,
+                    price: i.product.price,
+                    quantity: i.quantity
+                }))
+            });
+
+            toast.success("Order placed successfully!");
+            router.push(`/orders/${order.id}`);
+        } catch (error) {
+            console.error("Order placement failed:", error);
+            toast.error("Failed to place order.");
+        } finally {
+            setIsPlacing(false);
+        }
+    };
+
     const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
     const taxes = subtotal * 0.05;
     const delivery = subtotal >= 500 ? 0 : 40;
@@ -95,9 +135,9 @@ export default function CartPage() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4">
-                <SectionTitle 
-                    title="Your Shopping Cart" 
-                    subtitle="Review your treats and prepare for checkout" 
+                <SectionTitle
+                    title="Your Shopping Cart"
+                    subtitle="Review your treats and prepare for checkout"
                     align="left"
                 />
 
@@ -114,7 +154,7 @@ export default function CartPage() {
                             <div className="space-y-3">
                                 <h2 className="text-3xl font-black text-foreground tracking-tight">Your cart is empty</h2>
                                 <p className="text-muted-foreground text-lg">
-                                    Looks like you haven't added any treats yet. Let's find something delicious!
+                                    Looks like you haven&apos;t added any treats yet. Let&apos;s find something delicious!
                                 </p>
                             </div>
                             <Button className="h-12 px-8 rounded-xl font-bold text-base shadow-soft hover:shadow-premium transition-all">
@@ -134,8 +174,8 @@ export default function CartPage() {
                                     </div>
                                     <div className="p-2 md:p-6 space-y-4">
                                         {cart.map((item) => (
-                                            <GlassCard 
-                                                key={item.id} 
+                                            <GlassCard
+                                                key={item.id}
                                                 className="p-4 md:p-6 border-primary/5 hover:border-primary/20 transition-all duration-300"
                                                 hover
                                             >
@@ -156,7 +196,7 @@ export default function CartPage() {
                                                         <p className="text-2xl font-black text-primary">
                                                             ₹{item.product.price}
                                                         </p>
-                                                        
+
                                                         <div className="flex items-center justify-center md:justify-start gap-4 mt-4">
                                                             <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border/40">
                                                                 <Button
@@ -189,7 +229,7 @@ export default function CartPage() {
                                                         >
                                                             <IconTrash className="h-6 w-6" />
                                                         </Button>
-                                                        
+
                                                         <div className="text-right">
                                                             <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60">Subtotal</p>
                                                             <p className="text-xl font-black text-foreground">₹{(item.product.price * item.quantity).toFixed(2)}</p>
@@ -247,18 +287,31 @@ export default function CartPage() {
                                                 </div>
                                             </div>
 
-                                            <Button className="w-full h-14 rounded-2xl text-lg font-black tracking-tight shadow-soft hover:shadow-premium bg-linear-to-br from-primary to-primary/80 transition-all group">
-                                                Secure Checkout
-                                                <IconShoppingCart className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                            <Button
+                                                onClick={handlePlaceOrder}
+                                                disabled={isPlacing || cart.length === 0}
+                                                className="w-full h-14 rounded-2xl text-lg font-black tracking-tight shadow-soft hover:shadow-premium bg-linear-to-br from-primary to-primary/80 transition-all group"
+                                            >
+                                                {isPlacing ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                                        Placing Order...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Secure Checkout
+                                                        <IconShoppingCart className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                                    </>
+                                                )}
                                             </Button>
-                                            
+
                                             <p className="text-[10px] text-center text-muted-foreground font-bold uppercase tracking-widest mt-6">
                                                 Secure payment processed via Stripe
                                             </p>
                                         </div>
                                     </div>
                                 </GlassCard>
-                                
+
                                 <div className="mt-6 p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                                         <IconTruck className="h-6 w-6" />

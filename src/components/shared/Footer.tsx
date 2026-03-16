@@ -1,6 +1,5 @@
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 const Footer = () => {
     return (
@@ -29,9 +28,9 @@ const Footer = () => {
                         </p>
                         <div className="flex gap-3">
                             {[Facebook, Instagram, Twitter].map((Icon, idx) => (
-                                <a 
-                                    key={idx} 
-                                    href="#" 
+                                <a
+                                    key={idx}
+                                    href="#"
                                     className="w-10 h-10 rounded-xl bg-background border border-border/60 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all group"
                                 >
                                     <Icon className="h-5 w-5 group-hover:scale-110 transition-transform" />
@@ -51,8 +50,8 @@ const Footer = () => {
                                 { name: "Contact", href: "/contact" }
                             ].map((link) => (
                                 <li key={link.name}>
-                                    <Link 
-                                        href={link.href} 
+                                    <Link
+                                        href={link.href}
                                         className="text-muted-foreground hover:text-primary font-bold transition-all flex items-center group text-sm"
                                     >
                                         <ArrowRight className="h-3 w-3 mr-2 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
@@ -74,8 +73,8 @@ const Footer = () => {
                                 { name: "Gourmet Cupcakes", href: "/products#cupcake" }
                             ].map((link) => (
                                 <li key={link.name}>
-                                    <Link 
-                                        href={link.href} 
+                                    <Link
+                                        href={link.href}
                                         className="text-muted-foreground hover:text-primary font-bold transition-all flex items-center group text-sm"
                                     >
                                         <ArrowRight className="h-3 w-3 mr-2 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />

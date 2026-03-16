@@ -2,7 +2,6 @@
 
 import { ArrowRight, Clock, Shield, Sparkles, ShoppingCart, Star, Zap, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/hero-bakery.jpg";
 import middleImage from "@/assets/hero-section.jpg";
 import croissantImage from "@/assets/croissant.jpg";
 import breadImage from "@/assets/bread.jpg";
@@ -79,17 +78,17 @@ const HomePage = () => {
                             <Zap className="h-3.5 w-3.5 fill-current" />
                             <span>Premium Bakery Marketplace</span>
                         </div>
-                        
+
                         <div className="space-y-6">
                             <h1 className="text-6xl md:text-8xl lg:text-[9rem] font-black tracking-tighter leading-[0.85] text-foreground animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
                                 Freshly <br />
                                 <span className="text-primary italic font-serif relative">
                                     Baked
                                     <span className="absolute -bottom-2 md:-bottom-4 left-0 w-full h-2 md:h-4 bg-primary/10 -skew-x-12 -z-10 opacity-50" />
-                                </span> 
+                                </span>
                                 <span className="text-foreground"> Joy</span>
                             </h1>
-                            
+
                             <p className="text-lg md:text-xl text-muted-foreground font-semibold max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500 text-balance">
                                 Discover artisan breads, gourmet pastries, and bespoke cakes from the finest local bakeries, delivered directly to your door.
                             </p>
@@ -106,9 +105,9 @@ const HomePage = () => {
                                 </Button>
                             </Link>
                             <Link href="/about" className="w-full sm:w-auto">
-                                <Button 
-                                    size="lg" 
-                                    variant="outline" 
+                                <Button
+                                    size="lg"
+                                    variant="outline"
                                     className="h-16 px-10 text-lg font-black rounded-2xl border-2 hover:bg-muted/50 transition-all w-full"
                                 >
                                     Our Story
@@ -148,21 +147,21 @@ const HomePage = () => {
                 <div className="container mx-auto px-4">
                     <div className="grid md:grid-cols-3 gap-10">
                         {[
-                            { 
-                                icon: Clock, 
-                                title: "Fresh Every Morning", 
+                            {
+                                icon: Clock,
+                                title: "Fresh Every Morning",
                                 desc: "Our bakers start before the sun rises to ensure you get the freshest treats possible.",
                                 color: "bg-blue-500/10 text-blue-600"
                             },
-                            { 
-                                icon: Shield, 
-                                title: "Artisan Quality", 
+                            {
+                                icon: Shield,
+                                title: "Artisan Quality",
                                 desc: "No preservatives, no shortcuts. Just pure, high-quality ingredients made with passion.",
                                 color: "bg-primary/10 text-primary"
                             },
-                            { 
-                                icon: Sparkles, 
-                                title: "Handcrafted Love", 
+                            {
+                                icon: Sparkles,
+                                title: "Handcrafted Love",
                                 desc: "Each item is crafted by hand, giving it a unique touch that machine-made goods lack.",
                                 color: "bg-accent/20 text-accent-foreground"
                             }
@@ -184,9 +183,9 @@ const HomePage = () => {
             {/* Shops Section */}
             <section className="py-24 md:py-32">
                 <div className="container mx-auto px-4">
-                    <SectionTitle 
-                        title="Featured Bakeries" 
-                        subtitle="We've partnered with the best local artisans to bring you high-quality baked goods." 
+                    <SectionTitle
+                        title="Featured Bakeries"
+                        subtitle="We've partnered with the best local artisans to bring you high-quality baked goods."
                     />
 
                     {shops.map((shop) => (
@@ -208,7 +207,7 @@ const HomePage = () => {
                                 </div>
                                 <Link href="/products">
                                     <Button variant="ghost" className="font-bold group hover:text-primary">
-                                        View full menu 
+                                        View full menu
                                         <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                                     </Button>
                                 </Link>

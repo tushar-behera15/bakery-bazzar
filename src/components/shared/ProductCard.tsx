@@ -1,4 +1,4 @@
-import { ShoppingCart, Heart, Plus } from "lucide-react";
+import { Heart, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
@@ -25,7 +25,7 @@ const ProductCard = ({
     onAddToCart,
 }: ProductCardProps) => {
     return (
-        <GlassCard 
+        <GlassCard
             className="flex flex-col h-full group"
             hover
         >
@@ -37,7 +37,7 @@ const ProductCard = ({
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                
+
                 {/* Overlay on hover */}
                 <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 

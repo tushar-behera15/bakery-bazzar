@@ -1,7 +1,6 @@
 'use client'
 import { ShoppingCart, Menu, User, X, ChevronRight } from "lucide-react";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
 import { Skeleton } from "../ui/skeleton";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +28,7 @@ const Navbar = () => {
         { href: "/products", label: "Products" },
         { href: "/about", label: "About Us" },
         { href: "/contact", label: "Contact" },
+        { href: "/orders", label: "Orders" },
     ];
 
     useEffect(() => {
@@ -124,8 +124,8 @@ const Navbar = () => {
                                     href={href}
                                     className={cn(
                                         "px-4 py-1.5 text-sm font-medium transition-all rounded-full relative group/link",
-                                        pathname === href 
-                                            ? "bg-background text-primary shadow-sm" 
+                                        pathname === href
+                                            ? "bg-background text-primary shadow-sm"
                                             : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                                     )}
                                 >
@@ -241,8 +241,8 @@ const Navbar = () => {
                                 href={href}
                                 className={cn(
                                     "px-4 py-3 rounded-xl flex items-center justify-between transition-colors",
-                                    pathname === href 
-                                        ? "bg-primary/10 text-primary font-semibold" 
+                                    pathname === href
+                                        ? "bg-primary/10 text-primary font-semibold"
                                         : "hover:bg-muted text-foreground/80 hover:text-foreground"
                                 )}
                             >

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -112,13 +113,13 @@ export default function ProductsPage() {
                 {/* Header & Search */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="text-center md:text-left">
-                        <SectionTitle 
-                            title="Bakery Collection" 
-                            subtitle="Explore artisanal treats from the finest bakeshops" 
+                        <SectionTitle
+                            title="Bakery Collection"
+                            subtitle="Explore artisanal treats from the finest bakeshops"
                             align="left"
                         />
                     </div>
-                    
+
                     <div className="w-full md:w-[400px]">
                         <GlassCard className="p-1 px-1.5 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300">
                             <div className="relative flex items-center">
@@ -130,9 +131,9 @@ export default function ProductsPage() {
                                     className="pl-12 pr-4 h-12 rounded-xl bg-transparent border-none text-foreground focus-visible:ring-0 shadow-none font-medium placeholder:text-muted-foreground/40"
                                 />
                                 {query && (
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => setQuery("")}
                                         className="h-8 px-2 hover:bg-muted/50 rounded-lg mr-2"
                                     >
@@ -189,13 +190,13 @@ export default function ProductsPage() {
                                                         className="object-cover transition-transform duration-700 group-hover/card:scale-110"
                                                     />
                                                     <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
-                                                    
-                                                    <Badge 
+
+                                                    <Badge
                                                         className="absolute top-4 left-4 bg-background/80 blur-backdrop-sm border-none shadow-premium text-primary font-bold text-[10px] uppercase tracking-widest px-3 py-1"
                                                     >
                                                         {product.category}
                                                     </Badge>
-                                                    
+
                                                     <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover/card:translate-y-0 group-hover/card:opacity-100 transition-all duration-300 flex items-center justify-between">
                                                         <div className="px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold">
                                                             View Details
@@ -254,11 +255,11 @@ export default function ProductsPage() {
                             <div className="space-y-2">
                                 <h3 className="text-2xl font-bold">No treats found</h3>
                                 <p className="text-muted-foreground max-w-md mx-auto">
-                                    We couldn't find any products matching "<strong>{query}</strong>". Try searching for something else!
+                                    We couldn&apos;t find any products matching &quot;<strong>{query}</strong>&quot;. Try searching for something else!
                                 </p>
                             </div>
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => setQuery("")}
                                 className="rounded-xl px-8"
                             >

@@ -24,7 +24,6 @@ import {
     IconGripVertical,
     IconLoader,
     IconDotsVertical,
-    IconPlus,
 } from "@tabler/icons-react"
 import {
     ColumnDef,
@@ -58,25 +57,27 @@ import {
 } from "@/components/ui/table"
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
+import { format } from "date-fns"
 
-// 🧾 Order Schema
+// 🧾 Order Schema (Updated to match backend response)
 export const orderSchema = z.object({
     id: z.number(),
-    buyer: z.string(),
+    buyerId: z.number().optional(),
+    buyer: z.object({
+        id: z.number(),
+        name: z.string(),
+        email: z.string(),
+    }).optional(), // The backend now populates buyer object
     totalAmount: z.number(),
-    status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED"]),
-    itemsCount: z.number(),
+    status: z.enum(["PENDING", "COMPLETED", "CANCELLED", "SHIPPED", "DELIVERED", "PAID"]),
+    items: z.array(z.any()).optional(),
+    itemsCount: z.number().optional(),
     createdAt: z.string(),
 })
 
-// 🧁 Dummy Orders Data
-const orderData: z.infer<typeof orderSchema>[] = [
-    { id: 1287, buyer: "Rohit Sharma", totalAmount: 1250, status: "PENDING", itemsCount: 3, createdAt: "2025-10-01" },
-    { id: 1288, buyer: "Neha Patel", totalAmount: 500, status: "PAID", itemsCount: 1, createdAt: "2025-10-02" },
-    { id: 1289, buyer: "Amit Yadav", totalAmount: 3200, status: "SHIPPED", itemsCount: 5, createdAt: "2025-10-03" },
-    { id: 1290, buyer: "Kiran Mehta", totalAmount: 750, status: "DELIVERED", itemsCount: 2, createdAt: "2025-10-04" },
-    { id: 1291, buyer: "Priya Nair", totalAmount: 1200, status: "CANCELLED", itemsCount: 4, createdAt: "2025-10-05" },
-]
+type OrderType = z.infer<typeof orderSchema>
 
 // Drag handle
 function DragHandle({ id }: { id: number }) {
@@ -90,7 +91,7 @@ function DragHandle({ id }: { id: number }) {
 }
 
 // Drawer for order details
-function OrderDrawer({ order }: { order: z.infer<typeof orderSchema> }) {
+function OrderDrawer({ order }: { order: OrderType }) {
     return (
         <Drawer>
             <DrawerTrigger asChild>
@@ -98,15 +99,15 @@ function OrderDrawer({ order }: { order: z.infer<typeof orderSchema> }) {
             </DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader>
-                    <DrawerTitle>{`${order.id}`}</DrawerTitle>
+                    <DrawerTitle>Order #{order.id}</DrawerTitle>
                     <DrawerDescription>Showing details for this order.</DrawerDescription>
                 </DrawerHeader>
                 <div className="px-4 pb-4">
-                    <div className="text-sm mb-2">Buyer: {order.buyer}</div>
-                    <div className="text-sm mb-2">Items Count: {order.itemsCount}</div>
+                    <div className="text-sm mb-2">Buyer: {order.buyer?.name || `User #${order.buyerId}`}</div>
+                    <div className="text-sm mb-2">Items Count: {order.itemsCount || order.items?.length || 0}</div>
                     <div className="text-sm mb-2">Total Amount: ₹{order.totalAmount}</div>
                     <div className="text-sm mb-2">Status: {order.status}</div>
-                    <div className="text-sm mb-2">Created At: {order.createdAt}</div>
+                    <div className="text-sm mb-2">Created At: {format(new Date(order.createdAt), "PPP")}</div>
                     <Separator className="my-4" />
                     <div className="text-sm">You can manage this order from this drawer.</div>
                 </div>
@@ -122,7 +123,7 @@ function OrderDrawer({ order }: { order: z.infer<typeof orderSchema> }) {
 }
 
 // Table columns
-const columns: ColumnDef<z.infer<typeof orderSchema>>[] = [
+const columns: ColumnDef<OrderType>[] = [
     { id: "drag", header: () => null, cell: ({ row }) => <DragHandle id={row.original.id} /> },
     {
         id: "select",
@@ -141,13 +142,25 @@ const columns: ColumnDef<z.infer<typeof orderSchema>>[] = [
         ),
     },
     { accessorKey: "id", header: "Order ID", cell: ({ row }) => <OrderDrawer order={row.original} /> },
-    { accessorKey: "buyer", header: "Buyer", cell: ({ row }) => row.original.buyer },
-    { accessorKey: "itemsCount", header: "Items", cell: ({ row }) => row.original.itemsCount },
-    { accessorKey: "totalAmount", header: "Total (₹)", cell: ({ row }) => row.original.totalAmount },
+    {
+        accessorKey: "buyer",
+        header: "Buyer",
+        cell: ({ row }) => row.original.buyer?.name || `User #${row.original.buyerId}`
+    },
+    {
+        accessorKey: "itemsCount",
+        header: "Items",
+        cell: ({ row }) => row.original.itemsCount || row.original.items?.length || 0
+    },
+    {
+        accessorKey: "totalAmount",
+        header: "Total (₹)",
+        cell: ({ row }) => `₹${row.original.totalAmount.toFixed(2)}`
+    },
     {
         accessorKey: "status", header: "Status", cell: ({ row }) => (
             <Badge variant="outline" className="flex items-center gap-1">
-                {row.original.status === "PAID" || row.original.status === "DELIVERED" ? (
+                {row.original.status === "PAID" || row.original.status === "DELIVERED" || row.original.status === "COMPLETED" ? (
                     <IconCircleCheckFilled className="fill-green-500" />
                 ) : row.original.status === "PENDING" || row.original.status === "SHIPPED" ? (
                     <IconLoader />
@@ -156,7 +169,11 @@ const columns: ColumnDef<z.infer<typeof orderSchema>>[] = [
             </Badge>
         )
     },
-    { accessorKey: "createdAt", header: "Created At", cell: ({ row }) => row.original.createdAt },
+    {
+        accessorKey: "createdAt",
+        header: "Created At",
+        cell: ({ row }) => format(new Date(row.original.createdAt), "MMM d, yyyy")
+    },
     {
         id: "actions",
         cell: () => (
@@ -178,7 +195,7 @@ const columns: ColumnDef<z.infer<typeof orderSchema>>[] = [
 ]
 
 // Draggable row
-function DraggableRow({ row }: { row: Row<z.infer<typeof orderSchema>> }) {
+function DraggableRow({ row }: { row: Row<OrderType> }) {
     const { transform, transition, setNodeRef } = useSortable({ id: row.original.id })
     return (
         <TableRow ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}>
@@ -190,9 +207,13 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof orderSchema>> }) {
 }
 
 // Main Orders Table
-export function OrdersTable({ data }: { data: z.infer<typeof orderSchema>[] }) {
+export function OrdersTable({ data }: { data: OrderType[] }) {
     const [rows, setRows] = React.useState(data)
     const [sorting, setSorting] = React.useState<SortingState>([])
+
+    React.useEffect(() => {
+        setRows(data)
+    }, [data])
 
     const sensors = useSensors(
         useSensor(MouseSensor),
@@ -225,7 +246,7 @@ export function OrdersTable({ data }: { data: z.infer<typeof orderSchema>[] }) {
         <div className="w-full p-4">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Orders</h2>
-                <Button variant="outline" size="sm"><IconPlus /> Add Order</Button>
+
             </div>
 
             <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]} sensors={sensors}>
@@ -243,7 +264,15 @@ export function OrdersTable({ data }: { data: z.infer<typeof orderSchema>[] }) {
                     </TableHeader>
                     <TableBody>
                         <SortableContext items={rows.map(r => r.id)} strategy={verticalListSortingStrategy}>
-                            {table.getRowModel().rows.map(row => <DraggableRow key={row.id} row={row} />)}
+                            {table.getRowModel().rows.length > 0 ? (
+                                table.getRowModel().rows.map(row => <DraggableRow key={row.id} row={row} />)
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                                        No orders found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </SortableContext>
                     </TableBody>
                 </Table>
@@ -254,5 +283,47 @@ export function OrdersTable({ data }: { data: z.infer<typeof orderSchema>[] }) {
 
 // Default export
 export default function OrdersDataTable() {
-    return <OrdersTable data={orderData} />
+    const [orders, setOrders] = React.useState<OrderType[]>([])
+    const [loading, setLoading] = React.useState(true)
+
+    React.useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                // Step 1: Get the current shop info
+                const shopRes = await api.get<{ shop: { id: number } }>("/shop/me", {
+                    credentials: "include"
+                })
+
+                if (!shopRes.shop?.id) {
+                    toast.error("Shop not found")
+                    return
+                }
+
+                // Step 2: Fetch orders for this shop
+                const ordersData = await api.get<OrderType[]>(`/orders/shop/${shopRes.shop.id}`, {
+                    credentials: "include"
+                })
+
+                setOrders(ordersData)
+            } catch (error) {
+                console.error("Failed to fetch orders:", error)
+                toast.error("Failed to load orders")
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchOrders()
+    }, [])
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <IconLoader className="animate-spin mr-2" />
+                <span>Loading orders...</span>
+            </div>
+        )
+    }
+
+    return <OrdersTable data={orders} />
 }
