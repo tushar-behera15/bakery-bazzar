@@ -64,25 +64,9 @@ import {
 
 import { Separator } from "@/components/ui/separator";
 import { IconDotsVertical, IconGripVertical } from "@tabler/icons-react";
+import { Shop } from "@/types/shop";
 
 
-// 🧾 Shop type (MATCHES YOUR PRISMA MODEL)
-export interface Shop {
-    id: number;
-    name: string;
-    address: string;
-    description?: string;
-    contactEmail: string;
-    contactNumber?: string;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-    owner: {
-        id: number;
-        name: string;
-    };
-    products: any[];
-}
 
 // 🔹 Drag Handle
 function DragHandle({ id }: { id: number }) {
@@ -196,7 +180,7 @@ export default function ShopTable() {
                 });
                 if (!res.ok) throw new Error("Failed to fetch shops");
                 const data = await res.json();
-                setRows(data.shops);
+                setRows(data.shops || data); // data.shops if it's the wrapped response, or just data if it's the array
             } catch (err) {
                 console.error(err);
             } finally {

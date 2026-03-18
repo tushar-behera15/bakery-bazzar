@@ -65,7 +65,7 @@ const HomePage = () => {
         <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
 
             {/* Hero Section */}
-            <section className="relative pt-32 pb-16 lg:pt-48 lg:pb-24 overflow-hidden mesh-gradient dark:mesh-gradient-dark">
+            <section className="relative pt-20 pb-16 lg:pt-32 lg:pb-24 overflow-hidden mesh-gradient dark:mesh-gradient-dark">
                 {/* Background Decor */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full -z-10">
                     <div className="absolute top-[-5%] left-[-5%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
