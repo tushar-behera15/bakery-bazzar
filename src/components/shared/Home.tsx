@@ -1,64 +1,73 @@
 'use client'
 
-import { ArrowRight, Clock, Shield, Sparkles, ShoppingCart, Star, Zap, ChevronRight } from "lucide-react";
+import { ArrowRight, Clock, Shield, Sparkles, Star, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import middleImage from "@/assets/hero-section.jpg";
 import croissantImage from "@/assets/croissant.jpg";
-import breadImage from "@/assets/bread.jpg";
-import cakeImage from "@/assets/cake.jpg";
-import macaronsImage from "@/assets/macarons.jpg";
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import Footer from "@/components/shared/Footer";
 import SectionTitle from "@/components/shared/SectionTitle";
+import ShopCard from "@/components/shared/ShopCard";
 import GlassCard from "@/components/ui/glass-card";
 import { cn } from "@/lib/utils";
 
-const HomePage = () => {
-    const shops = [
-        {
-            id: 1,
-            name: "XQZ Bakery",
-            logo: croissantImage,
-            tagline: "Artisan breads & specialty pastries",
-            rating: 4.8,
-            products: [
-                { id: 1, name: "Sourdough Bread", price: 80, image: breadImage, category: "bread" },
-                { id: 2, name: "Butter Croissant", price: 100, image: croissantImage, category: "pastry" },
-                { id: 3, name: "Chocolate Pastry", price: 120, image: macaronsImage, category: "pastry" },
-                { id: 4, name: "Almond Croissant", price: 130, image: croissantImage, category: "pastry" },
-                { id: 5, name: "Pain au Chocolat", price: 150, image: breadImage, category: "pastry" },
-            ],
-        },
-        {
-            id: 2,
-            name: "Sweet Crumbs",
-            logo: cakeImage,
-            tagline: "Bespoke cakes and gourmet desserts",
-            rating: 4.9,
-            products: [
-                { id: 6, name: "Strawberry Cake", price: 350, image: cakeImage, category: "cake" },
-                { id: 7, name: "Blueberry Muffin", price: 90, image: macaronsImage, category: "pastry" },
-                { id: 8, name: "Vanilla Cupcake", price: 70, image: croissantImage, category: "cake" },
-                { id: 9, name: "Chocolate Brownie", price: 110, image: cakeImage, category: "pastry" },
-                { id: 10, name: "Lemon Tart", price: 150, image: macaronsImage, category: "pastry" },
-            ],
-        },
-    ];
+interface Shop {
+    id: number;
+    name: string;
+    logo: string | StaticImageData;
+    tagline: string;
+    rating: number;
+    address?: string;
+}
 
+const HomePage = () => {
+    const [shops, setShops] = useState<Shop[]>([]);
+    const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/auth/me", {
-            method: "GET",
-            credentials: "include",
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.user) setUser(data.user);
-            })
-            .catch((err) => console.error(err));
+        const fetchData = async () => {
+            try {
+                // Fetch Shops
+                const shopRes = await fetch("http://localhost:5000/api/shop");
+                const shopData = await shopRes.json();
+
+                if (shopData.shops) {
+                    const mappedShops: Shop[] = shopData.shops.slice(0, 5).map((s: { 
+                        id: number; 
+                        name: string; 
+                        description?: string; 
+                        address?: string;
+                        products?: { 
+                            images?: { url: string }[]; 
+                        }[] 
+                    }) => ({
+                        id: s.id,
+                        name: s.name,
+                        logo: s.products?.[0]?.images?.[0]?.url || croissantImage,
+                        tagline: s.description || "Artisan breads & specialty pastries",
+                        rating: 4.8,
+                        address: s.address,
+                    }));
+                    setShops(mappedShops);
+                }
+
+                // Fetch User
+                const userRes = await fetch("http://localhost:5000/api/auth/me", {
+                    method: "GET",
+                    credentials: "include",
+                });
+                const userData = await userRes.json();
+                if (userData.user) setUser(userData.user);
+            } catch (err) {
+                console.error("Home page fetch error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
 
     return (
@@ -188,70 +197,38 @@ const HomePage = () => {
                         subtitle="We've partnered with the best local artisans to bring you high-quality baked goods."
                     />
 
-                    {shops.map((shop) => (
-                        <div key={shop.id} className="mb-24 last:mb-0">
-                            {/* Shop Header */}
-                            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
-                                <div className="flex items-center gap-6">
-                                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-border shadow-soft shrink-0">
-                                        <Image src={shop.logo} alt={shop.name} fill className="object-cover" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest">
-                                            <Star className="h-3.5 w-3.5 fill-current" />
-                                            <span>{shop.rating} Rated</span>
-                                        </div>
-                                        <h3 className="text-3xl font-black">{shop.name}</h3>
-                                        <p className="text-muted-foreground font-medium">{shop.tagline}</p>
-                                    </div>
-                                </div>
-                                <Link href="/products">
-                                    <Button variant="ghost" className="font-bold group hover:text-primary">
-                                        View full menu
-                                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                    </Button>
-                                </Link>
-                            </div>
-
-                            {/* Carousel / Scroll Area */}
-                            <div className="flex gap-6 overflow-x-auto pb-8 snap-x hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-                                {shop.products.map((product) => (
-                                    <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center">
-                                        <GlassCard className="flex flex-col h-full group">
-                                            <div className="relative aspect-square overflow-hidden bg-muted/30">
-                                                <Image
-                                                    src={product.image.src}
-                                                    alt={product.name}
-                                                    fill
-                                                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                                />
-                                                <span className="absolute top-4 left-4 bg-background px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                                    {product.category}
-                                                </span>
-                                            </div>
-                                            <div className="p-6 space-y-4">
-                                                <div className="flex justify-between items-start">
-                                                    <h4 className="text-lg font-bold line-clamp-1">{product.name}</h4>
-                                                    <span className="text-xl font-black text-primary">₹{product.price}</span>
-                                                </div>
-                                                <Button size="sm" className="w-full rounded-xl font-bold gap-2">
-                                                    <ShoppingCart className="h-4 w-4" /> Add to Cart
-                                                </Button>
-                                            </div>
-                                        </GlassCard>
-                                    </div>
-                                ))}
-                                <div className="min-w-[200px] flex flex-col items-center justify-center snap-center">
-                                    <Link href="/products">
-                                        <div className="w-16 h-16 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary hover:text-primary transition-all group">
-                                            <ChevronRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
-                                        </div>
-                                    </Link>
-                                    <p className="mt-4 font-bold text-muted-foreground">See More</p>
-                                </div>
-                            </div>
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+                            <div className="w-16 h-16 bg-primary/10 rounded-full mb-4" />
+                            <div className="h-4 w-48 bg-muted rounded mb-2" />
+                            <div className="h-3 w-32 bg-muted/60 rounded" />
                         </div>
-                    ))}
+                    ) : shops.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {shops.map((shop) => (
+                                <ShopCard 
+                                    key={shop.id}
+                                    id={shop.id}
+                                    name={shop.name}
+                                    logo={shop.logo}
+                                    tagline={shop.tagline}
+                                    rating={shop.rating}
+                                    address={shop.address}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-20 border-2 border-dashed border-border rounded-[3rem]">
+                            <Sparkles className="h-12 w-12 text-primary/20 mx-auto mb-6" />
+                            <h3 className="text-2xl font-black mb-2">Artisan Bakeries Coming Soon</h3>
+                            <p className="text-muted-foreground font-medium max-w-md mx-auto">
+                                We&apos;re currently onboarding the finest local bakers. Check back soon for freshly baked joy!
+                            </p>
+                            <Link href="/products" className="inline-block mt-8">
+                                <Button className="font-bold rounded-xl px-8">Explore Menu Anyway</Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </section>
 
