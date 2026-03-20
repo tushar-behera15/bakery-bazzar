@@ -9,6 +9,8 @@ import { Pencil, Mail, Phone, CheckCircle2, Store, MapPin } from "lucide-react"
 import GlassCard from "@/components/ui/glass-card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { toast } from "sonner";
 
 interface Owner {
     name: string;
@@ -23,12 +25,17 @@ interface Shop {
     description?: string;
     contactEmail: string;
     contactNumber: string;
+    latitude?: number | null;
+    longitude?: number | null;
     owner: Owner;
 }
 
 export default function OwnerProfilePage() {
     const [shop, setShop] = useState<Shop | null>(null);
     const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
+
+    const geo = useGeolocation();
 
     useEffect(() => {
         const fetchMyShop = async () => {
@@ -50,6 +57,36 @@ export default function OwnerProfilePage() {
 
         fetchMyShop();
     }, []);
+
+    const handleUpdateLocation = async () => {
+        if (!geo.latitude || !geo.longitude) {
+            toast.error(geo.error || "Location not detected yet. Please wait or allow permissions.");
+            return;
+        }
+
+        setUpdating(true);
+        try {
+            const res = await fetch("http://localhost:5000/api/shop/update", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    latitude: geo.latitude,
+                    longitude: geo.longitude
+                })
+            });
+
+            if (!res.ok) throw new Error("Failed to update location");
+
+            setShop(prev => prev ? { ...prev, latitude: geo.latitude, longitude: geo.longitude } : null);
+            toast.success("Shop location updated successfully!");
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to update location");
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     if (loading) return <div className="text-center p-20 text-muted-foreground italic">Updating your profile view...</div>;
     if (!shop) return <div className="text-center p-20 text-destructive font-bold underline decoration-wavy">No shop found. Head to dashboard to setup.</div>;
@@ -177,10 +214,29 @@ export default function OwnerProfilePage() {
                                 <Label className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">Full Address</Label>
                                 <p className="text-sm font-medium leading-relaxed px-1">{shop.address}</p>
                             </div>
+
+                            <div className="space-y-1.5 pt-2">
+                                <Label className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">Coordinates</Label>
+                                <p className="text-[10px] font-mono font-medium px-1">
+                                    {shop.latitude && shop.longitude 
+                                        ? `${shop.latitude.toFixed(6)}, ${shop.longitude.toFixed(6)}`
+                                        : "Not set"}
+                                </p>
+                            </div>
                         </div>
 
-                        <Button variant="outline" className="w-full rounded-xl border-primary/20 hover:bg-primary/5 font-bold gap-2">
-                            <Pencil className="w-4 h-4" /> Update Address
+                        <Button 
+                            variant="outline" 
+                            className="w-full rounded-xl border-primary/20 hover:bg-primary/5 font-bold gap-2"
+                            onClick={handleUpdateLocation}
+                            disabled={updating}
+                        >
+                            {updating ? (
+                                <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
+                            ) : (
+                                <MapPin className="w-4 h-4" />
+                            )}
+                            {shop.latitude ? "Update to Current Location" : "Set to Current Location"}
                         </Button>
                     </div>
                 </GlassCard>

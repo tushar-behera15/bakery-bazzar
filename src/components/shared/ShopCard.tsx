@@ -12,9 +12,10 @@ interface ShopCardProps {
     tagline: string;
     rating: number;
     address?: string;
+    distance?: number | null;
 }
 
-export default function ShopCard({ id, name, logo, tagline, rating, address }: ShopCardProps) {
+export default function ShopCard({ id, name, logo, tagline, rating, address, distance }: ShopCardProps) {
     return (
         <Link href={`/shops/${id}`}>
             <GlassCard 
@@ -34,6 +35,13 @@ export default function ShopCard({ id, name, logo, tagline, rating, address }: S
                         <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                         <span className="text-xs font-black">{rating}</span>
                     </div>
+
+                    {distance !== undefined && distance !== null && (
+                        <div className="absolute top-4 right-4 bg-primary/90 blur-backdrop-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-premium text-primary-foreground animate-in fade-in zoom-in duration-500">
+                            <MapPin className="h-3.5 w-3.5 fill-current" />
+                            <span className="text-xs font-black">{distance.toFixed(1)} km away</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-6 space-y-4">

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import GlassCard from "@/components/ui/glass-card";
 import Link from "next/link";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 export default function SellerSignup() {
     const router = useRouter();
@@ -26,6 +27,22 @@ export default function SellerSignup() {
     const [shopEmail, setShopEmail] = useState("");
     const [shopContact, setShopContact] = useState("");
     const [shopAddress, setShopAddress] = useState("");
+    const [latitude, setLatitude] = useState<number | null>(null);
+    const [longitude, setLongitude] = useState<number | null>(null);
+
+    const geo = useGeolocation();
+
+    const handleAutoLocation = () => {
+        if (geo.latitude && geo.longitude) {
+            setLatitude(geo.latitude);
+            setLongitude(geo.longitude);
+            toast.success("Location detected!");
+        } else if (geo.error) {
+            toast.error(geo.error);
+        } else {
+            toast.info("Detecting location... please wait.");
+        }
+    };
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,6 +58,8 @@ export default function SellerSignup() {
                     contactEmail: shopEmail,
                     contactNumber: shopContact,
                     address: shopAddress,
+                    latitude: latitude,
+                    longitude: longitude
                 }),
             });
 
@@ -159,7 +178,18 @@ export default function SellerSignup() {
                                         />
                                     </div>
                                     <div className="md:col-span-2 space-y-3">
-                                        <Label htmlFor="shopAddress" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Address</Label>
+                                        <div className="flex items-center justify-between ml-1">
+                                            <Label htmlFor="shopAddress" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Address</Label>
+                                            <Button 
+                                                type="button" 
+                                                variant="link" 
+                                                size="sm" 
+                                                className="h-auto p-0 text-[10px] font-black uppercase tracking-[0.1em] text-primary hover:text-primary/80"
+                                                onClick={handleAutoLocation}
+                                            >
+                                                Auto-detect Location
+                                            </Button>
+                                        </div>
                                         <div className="relative">
                                             <MapPin className="absolute left-4 top-4 text-primary/40 w-5 h-5" />
                                             <Textarea
@@ -172,6 +202,11 @@ export default function SellerSignup() {
                                                 required
                                             />
                                         </div>
+                                        {(latitude || longitude) && (
+                                            <p className="text-[10px] font-semibold text-primary/60 ml-1 italic animate-in slide-in-from-top-1">
+                                                Coordinates captured: {latitude?.toFixed(4)}, {longitude?.toFixed(4)}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="md:col-span-2 space-y-3">
                                         <Label htmlFor="shopDescription" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Description</Label>

@@ -12,6 +12,7 @@ import SectionTitle from "@/components/shared/SectionTitle";
 import ShopCard from "@/components/shared/ShopCard";
 import GlassCard from "@/components/ui/glass-card";
 import { cn } from "@/lib/utils";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 interface Shop {
     id: number;
@@ -20,9 +21,11 @@ interface Shop {
     tagline: string;
     rating: number;
     address?: string;
+    distance?: number | null;
 }
 
 const HomePage = () => {
+    const { latitude, longitude } = useGeolocation();
     const [shops, setShops] = useState<Shop[]>([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
@@ -31,7 +34,12 @@ const HomePage = () => {
         const fetchData = async () => {
             try {
                 // Fetch Shops
-                const shopRes = await fetch("http://localhost:5000/api/shop");
+                const params = new URLSearchParams();
+                if (latitude && longitude) {
+                    params.append("lat", latitude.toString());
+                    params.append("lng", longitude.toString());
+                }
+                const shopRes = await fetch(`http://localhost:5000/api/shop?${params.toString()}`);
                 const shopData = await shopRes.json();
 
                 if (shopData.shops) {
@@ -40,6 +48,7 @@ const HomePage = () => {
                         name: string; 
                         description?: string; 
                         address?: string;
+                        distance?: number | null;
                         products?: { 
                             images?: { url: string }[]; 
                         }[] 
@@ -50,6 +59,7 @@ const HomePage = () => {
                         tagline: s.description || "Artisan breads & specialty pastries",
                         rating: 4.8,
                         address: s.address,
+                        distance: s.distance,
                     }));
                     setShops(mappedShops);
                 }
@@ -68,7 +78,7 @@ const HomePage = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [latitude, longitude]);
 
     return (
         <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
@@ -214,6 +224,7 @@ const HomePage = () => {
                                     tagline={shop.tagline}
                                     rating={shop.rating}
                                     address={shop.address}
+                                    distance={shop.distance}
                                 />
                             ))}
                         </div>
