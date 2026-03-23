@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -101,8 +102,9 @@ export default function CartPage() {
 
         setIsPlacing(true);
         try {
-            const order = await api.post<Order>("/orders", {
-                buyerId: user.id, // Real buyer ID
+            // 1. Create Order and Payment in Backend
+            const order = await api.post<Order & { razorpay_order_id: string, key_id: string }>("/orders", {
+                buyerId: user.id,
                 addressId: 1, // Mock address ID
                 items: cart.map(i => ({
                     productId: i.product.id,
@@ -111,8 +113,45 @@ export default function CartPage() {
                 }))
             });
 
-            toast.success("Order placed successfully!");
-            router.push(`/orders/${order.id}`);
+            // 2. Initialize Razorpay Checkout
+            const options = {
+                key: order.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: total * 100,
+                currency: "INR",
+                name: "Bakery Bazzar",
+                description: `Order #${order.id}`,
+                order_id: order.razorpay_order_id,
+                handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
+                    try {
+                        // 3. Verify Payment in Backend
+                        await api.post("/payment/verify", {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        });
+
+                        toast.success("Payment successful! Order placed.");
+                        router.push(`/orders/${order.id}`);
+                    } catch (err) {
+                        console.error("Payment verification failed:", err);
+                        toast.error("Payment verification failed. Please contact support.");
+                    }
+                },
+                prefill: {
+                    name: user.name || "",
+                    email: user.email || "",
+                },
+                theme: {
+                    color: "#f97316", // Primary color
+                },
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.on('payment.failed', function (response: { error: { description: string } }) {
+                toast.error(`Payment failed: ${response.error.description}`);
+            });
+            rzp.open();
+
         } catch (error) {
             console.error("Order placement failed:", error);
             toast.error("Failed to place order.");
@@ -123,7 +162,7 @@ export default function CartPage() {
 
     const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
     const taxes = subtotal * 0.05;
-    const delivery = subtotal >= 500 ? 0 : 40;
+    const delivery = subtotal >= 500 ? 0 : 14;
     const total = subtotal + taxes + delivery;
 
     return (

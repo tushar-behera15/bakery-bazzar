@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 type Role = "BUYER" | "SELLER" | "ADMIN";
 
 interface AuthContextType {
-    user: { id: number; role: Role } | null;
+    user: { id: number; role: Role; name?: string; email?: string } | null;
     loading: boolean;
 }
 
@@ -38,6 +38,8 @@ export function AuthProvider({
                 setUser({
                     id: data.user?.id,
                     role: data.user?.role as Role,
+                    name: data.user?.name,
+                    email: data.user?.email,
                 });
             } catch {
                 router.replace("/auth/login");
