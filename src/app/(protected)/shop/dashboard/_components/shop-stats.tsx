@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import GlassCard from "@/components/ui/glass-card"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 import { 
     TrendingUp, 
     Package, 
@@ -18,43 +18,28 @@ interface Order {
 }
 
 export function ShopStats() {
-    const [stats, setStats] = useState({
-        revenue: 0,
-        orders: 0,
-        products: 0,
-        rating: 4.9
-    })
-    const [loading, setLoading] = useState(true)
+    const { data: stats = { revenue: 0, orders: 0, products: 0, rating: 4.9 }, isLoading: loading } = useQuery({
+        queryKey: ["shop-stats"],
+        queryFn: async () => {
+            const [ordersRes, productsRes] = await Promise.all([
+                api.get<Order[]>("/orders/shop/me", { credentials: "include" }),
+                api.get<unknown[]>("/product/me", { credentials: "include" })
+            ])
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                // Fetch relevant shop data
-                const [ordersRes, productsRes] = await Promise.all([
-                    api.get<Order[]>("/orders/shop/me", { credentials: "include" }),
-                    api.get<unknown[]>("/product/me", { credentials: "include" })
-                ])
-
-                const totalOrders = ordersRes.length
-                const totalRevenue = ordersRes
-                    .filter((o: Order) => o.status === "COMPLETED")
-                    .reduce((acc: number, current: Order) => acc + current.totalAmount, 0)
-                
-                setStats({
-                    revenue: totalRevenue,
-                    orders: totalOrders,
-                    products: productsRes.length,
-                    rating: 4.9
-                })
-            } catch (error) {
-                console.error("Error fetching shop stats:", error)
-            } finally {
-                setLoading(false)
+            const totalOrders = ordersRes.length
+            const totalRevenue = ordersRes
+                .filter((o: Order) => o.status === "COMPLETED")
+                .reduce((acc: number, current: Order) => acc + current.totalAmount, 0)
+            
+            return {
+                revenue: totalRevenue,
+                orders: totalOrders,
+                products: productsRes.length,
+                rating: 4.9
             }
-        }
-
-        fetchStats()
-    }, [])
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
 
     const statConfig = [
         { 

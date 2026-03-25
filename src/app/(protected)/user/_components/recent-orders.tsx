@@ -1,9 +1,6 @@
-"use client"
-
-import * as React from "react"
-import { useEffect, useState } from "react"
 import GlassCard from "@/components/ui/glass-card"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Clock, CheckCircle2, ChevronRight, Package } from "lucide-react"
@@ -18,24 +15,15 @@ interface Order {
 }
 
 export function RecentOrders({ userId }: { userId: number }) {
-    const [orders, setOrders] = useState<Order[]>([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const data = await api.get<Order[]>(`/orders?buyerId=${userId}`, { credentials: "include" })
-                // Get the most recent 5
-                setOrders(data.slice(0, 5))
-            } catch (error) {
-                console.error("Error fetching recent orders:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        if (userId) fetchOrders()
-    }, [userId])
+    const { data: orders = [], isLoading: loading } = useQuery<Order[]>({
+        queryKey: ["user-recent-orders", userId],
+        queryFn: async () => {
+            const data = await api.get<Order[]>(`/orders?buyerId=${userId}`, { credentials: "include" })
+            return data.slice(0, 5)
+        },
+        enabled: !!userId,
+        staleTime: 1000 * 60 * 5,
+    })
 
     if (loading) return (
         <GlassCard className="h-60 flex items-center justify-center">

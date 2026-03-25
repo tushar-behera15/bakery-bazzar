@@ -1,9 +1,6 @@
-"use client"
-
-import * as React from "react"
-import { useEffect, useState } from "react"
 import GlassCard from "@/components/ui/glass-card"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 import { ShoppingCart, Package, MapPin, Loader2 } from "lucide-react"
 
 interface Stats {
@@ -13,37 +10,38 @@ interface Stats {
 }
 
 export function BuyerStats({ userId }: { userId: number }) {
-    const [stats, setStats] = useState<Stats>({
-        totalOrders: 0,
-        cartItems: 0,
-        savedAddresses: 0
-    })
-    const [loading, setLoading] = useState(true)
+    const { data: stats, isLoading: loading } = useQuery<Stats>({
+        queryKey: ["user-stats", userId],
+        queryFn: async () => {
+            const [ordersData, cartData, addressesData] = await Promise.all([
+                api.get<unknown[]>(`/orders?buyerId=${userId}`, { credentials: "include" }),
+                api.get<{ items?: unknown[], totalCount?: number }>("/cart", { credentials: "include" }),
+                api.get<unknown[]>(`/addresses/user/${userId}`, { credentials: "include" })
+            ])
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                // Fetch stats concurrently
-                const [ordersData, cartData, addressesData] = await Promise.all([
-                    api.get<unknown[]>(`/orders?buyerId=${userId}`, { credentials: "include" }),
-                    api.get<{ items?: unknown[] }>("/cart", { credentials: "include" }),
-                    api.get<unknown[]>(`/addresses/user/${userId}`, { credentials: "include" })
-                ])
-
-                setStats({
-                    totalOrders: ordersData.length || 0,
-                    cartItems: cartData?.items?.length || 0,
-                    savedAddresses: addressesData.length || 0
-                })
-            } catch (error) {
-                console.error("Error fetching dashboard stats:", error)
-            } finally {
-                setLoading(false)
+            return {
+                totalOrders: Array.isArray(ordersData) ? ordersData.length : 0,
+                cartItems: cartData?.totalCount ?? cartData?.items?.length ?? 0,
+                savedAddresses: Array.isArray(addressesData) ? addressesData.length : 0
             }
-        }
+        },
+        enabled: !!userId,
+        staleTime: 1000 * 60 * 5,
+    })
 
-        if (userId) fetchStats()
-    }, [userId])
+
+
+    if (loading || !stats) {
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 lg:px-6">
+                {[1, 2, 3].map((i) => (
+                    <GlassCard key={i} className="h-32 flex items-center justify-center">
+                        <Loader2 className="animate-spin text-primary/40" />
+                    </GlassCard>
+                ))}
+            </div>
+        )
+    }
 
     const statItems = [
         {
@@ -69,19 +67,8 @@ export function BuyerStats({ userId }: { userId: number }) {
         }
     ]
 
-    if (loading) {
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 lg:px-6">
-                {[1, 2, 3].map((i) => (
-                    <GlassCard key={i} className="h-32 flex items-center justify-center">
-                        <Loader2 className="animate-spin text-primary/40" />
-                    </GlassCard>
-                ))}
-            </div>
-        )
-    }
-
     return (
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 lg:px-6">
             {statItems.map((item, index) => (
                 <GlassCard key={index} className="group hover:border-primary/30 transition-all duration-300">

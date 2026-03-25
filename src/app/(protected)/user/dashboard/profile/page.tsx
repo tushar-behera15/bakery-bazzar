@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { api } from "@/lib/api";
-import { Address, CreateAddressInput } from "@/types/address";
+import { Address, CreateAddressInput, UpdateAddressInput } from "@/types/address";
 import { toast } from "sonner";
 import GlassCard from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
@@ -30,13 +30,11 @@ interface User {
     avatarUrl?: string;
 }
 
-export default function OwnerProfilePage() {
-    const [profile, setProfile] = useState<User | null>(null);
-    const [addresses, setAddresses] = useState<Address[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-    const [formData, setFormData] = useState<Partial<CreateAddressInput>>({
+export default function UserProfilePage() {
+    const queryClient = useQueryClient();
+    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+    const [editingAddress, setEditingAddress] = React.useState<Address | null>(null);
+    const [formData, setFormData] = React.useState<Partial<CreateAddressInput>>({
         label: "",
         line1: "",
         line2: "",
@@ -47,32 +45,58 @@ export default function OwnerProfilePage() {
         phone: "",
     });
 
-    useEffect(() => {
-        const fetchProfileData = async () => {
-            try {
-                const res = await fetch("http://localhost:5000/api/auth/me", {
-                    credentials: "include",
-                });
+    const { data: profile, isLoading: profileLoading } = useQuery<User>({
+        queryKey: ["user-me"],
+        queryFn: async () => {
+            const res = await api.get<{ user: User }>("/auth/me", { credentials: "include" })
+            return res.user
+        },
+        staleTime: 1000 * 60 * 5,
+    })
 
-                if (!res.ok) throw new Error("Failed to fetch profile");
+    const { data: addresses = [], isLoading: addressesLoading } = useQuery<Address[]>({
+        queryKey: ["user-addresses", profile?.id],
+        queryFn: async () => {
+            return await api.get<Address[]>(`/addresses/user/${profile?.id}`, { credentials: "include" })
+        },
+        enabled: !!profile?.id,
+        staleTime: 1000 * 60 * 5,
+    })
 
-                const data = await res.json();
-                setProfile(data.user);
+    const createAddressMutation = useMutation({
+        mutationFn: async (data: Partial<CreateAddressInput>) => {
+            return await api.post<Address>("/addresses", { ...data, userId: profile?.id })
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["user-addresses", profile?.id] })
+            toast.success("Address added successfully")
+            setIsDialogOpen(false)
+        },
+        onError: () => toast.error("Failed to add address")
+    })
 
-                if (data.user?.id) {
-                    const addrData = await api.get<Address[]>(`/addresses/user/${data.user.id}`);
-                    setAddresses(addrData);
-                }
-            } catch (err) {
-                console.error(err);
-                toast.error("Failed to load profile data");
-            } finally {
-                setLoading(false);
-            }
-        };
+    const updateAddressMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: number, data: UpdateAddressInput }) => {
+            return await api.patch<Address>(`/addresses/${id}`, data)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["user-addresses", profile?.id] })
+            toast.success("Address updated successfully")
+            setIsDialogOpen(false)
+        },
+        onError: () => toast.error("Failed to update address")
+    })
 
-        fetchProfileData();
-    }, []);
+    const deleteAddressMutation = useMutation({
+        mutationFn: async (id: number) => {
+            return await api.delete(`/addresses/${id}`)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["user-addresses", profile?.id] })
+            toast.success("Address deleted successfully")
+        },
+        onError: () => toast.error("Failed to delete address")
+    })
 
     const handleOpenAdd = () => {
         setEditingAddress(null);
@@ -108,34 +132,19 @@ export default function OwnerProfilePage() {
         e.preventDefault();
         if (!profile?.id) return;
 
-        try {
-            if (editingAddress) {
-                const updated = await api.patch<Address>(`/addresses/${editingAddress.id}`, formData);
-                setAddresses(addresses.map(a => a.id === updated.id ? updated : a));
-                toast.success("Address updated successfully");
-            } else {
-                const created = await api.post<Address>("/addresses", { ...formData, userId: profile.id });
-                setAddresses([...addresses, created]);
-                toast.success("Address added successfully");
-            }
-            setIsDialogOpen(false);
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to save address");
+        if (editingAddress) {
+            updateAddressMutation.mutate({ id: editingAddress.id, data: formData })
+        } else {
+            createAddressMutation.mutate(formData)
         }
     };
 
     const handleDelete = async (id: number) => {
         if (!confirm("Are you sure you want to delete this address?")) return;
-        try {
-            await api.delete(`/addresses/${id}`);
-            setAddresses(addresses.filter(a => a.id !== id));
-            toast.success("Address deleted successfully");
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to delete address");
-        }
+        deleteAddressMutation.mutate(id)
     };
+
+    const loading = profileLoading || (!!profile?.id && addressesLoading);
 
     if (loading) return <div className="text-center py-20">Loading profile...</div>;
     if (!profile) return <div className="text-center py-20">No profile found</div>;

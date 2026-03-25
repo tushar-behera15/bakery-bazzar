@@ -1,10 +1,10 @@
 "use client"
 
-import * as React from "react"
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Mail, Phone, Settings, ShieldCheck, Loader2 } from "lucide-react"
+import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 import GlassCard from "@/components/ui/glass-card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -17,29 +17,14 @@ interface User {
 }
 
 export default function OwnerProfilePage() {
-    const [profile, setProfile] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const res = await fetch("http://localhost:5000/api/auth/me", {
-                    credentials: "include",
-                });
-
-                if (!res.ok) throw new Error("Failed to fetch profile");
-
-                const data = await res.json();
-                setProfile(data.user);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProfile();
-    }, []);
+    const { data: profile, isLoading: loading } = useQuery<User>({
+        queryKey: ["admin-profile"],
+        queryFn: async () => {
+            const res = await api.get<{ user: User }>("/auth/me", { credentials: "include" })
+            return res.user
+        },
+        staleTime: 1000 * 60 * 5,
+    })
 
     if (loading) {
         return (

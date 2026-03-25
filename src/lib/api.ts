@@ -76,6 +76,13 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  put: <T>(endpoint: string, body: any, options?: RequestInit) =>
+    apiFetch<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
   delete: <T>(endpoint: string, options?: RequestInit) =>
     apiFetch<T>(endpoint, { ...options, method: 'DELETE' }),
 };

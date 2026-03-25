@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import GlassCard from "@/components/ui/glass-card"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Clock, ChevronRight, Package, Loader2 } from "lucide-react"
@@ -11,27 +11,14 @@ import Link from "next/link"
 import type { Order } from "@/types/order"
 
 export function ShopRecentOrders() {
-    const [orders, setOrders] = useState<Order[]>([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                // Fetch shop specific orders
-                // Assuming we can filter or have a dedicated endpoint
-                const res = await api.get<Order[]>("/orders/shop/me", { credentials: "include" })
-                // Filter for current shop (logic might be needed if /orders returns everything)
-                // For now just taking first 5
-                setOrders(res.slice(0, 5))
-            } catch (error) {
-                console.error("Error fetching recent orders for shop:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchOrders()
-    }, [])
+    const { data: orders = [], isLoading: loading } = useQuery<Order[]>({
+        queryKey: ["shop-recent-orders"],
+        queryFn: async () => {
+            const res = await api.get<Order[]>("/orders/shop/me", { credentials: "include" })
+            return res.slice(0, 5)
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
 
     const getStatusColor = (status: string) => {
         switch (status) {

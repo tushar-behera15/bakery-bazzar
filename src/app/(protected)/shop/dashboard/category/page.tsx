@@ -43,6 +43,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import {
     Drawer,
     DrawerTrigger,
@@ -149,25 +151,21 @@ function DraggableRow({ row }: { row: Row<Category> }) {
 // 🧭 Main Component
 export function CategoriesTable() {
     const [rows, setRows] = React.useState<Category[]>([]);
-    const [loading, setLoading] = React.useState(true);
     const [sorting, setSorting] = React.useState<SortingState>([]);
 
-    // Fetch categories
+    const { data: categoriesData, isLoading: loading } = useQuery<Category[]>({
+        queryKey: ["shop-categories"],
+        queryFn: async () => {
+            return await api.get<Category[]>("/category");
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+
     React.useEffect(() => {
-        async function fetchCategories() {
-            try {
-                const res = await fetch("http://localhost:5000/api/category");
-                if (!res.ok) throw new Error("Failed to fetch categories");
-                const data: Category[] = await res.json();
-                setRows(data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
+        if (categoriesData) {
+            setRows(categoriesData);
         }
-        fetchCategories();
-    }, []);
+    }, [categoriesData]);
 
     // Sensors for DnD
     const sensors = useSensors(

@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import { Loader2 } from "lucide-react"
 import { AdminHero } from "../_components/admin-hero"
 import { AdminStats } from "../_components/admin-stats"
 import { AdminRecentSellers } from "../_components/admin-recent-sellers"
+import { useQuery } from "@tanstack/react-query"
 
 interface Admin {
     id: number
@@ -15,23 +15,14 @@ interface Admin {
 
 
 export default function Page() {
-    const [admin, setAdmin] = useState<Admin | null>(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchAdmin = async () => {
-            try {
-                // Fetch admin details
-                const adminRes = await api.get<{ user: Admin }>("/auth/me", { credentials: "include" })
-                setAdmin(adminRes.user)
-            } catch (error: unknown) {
-                console.error("Error fetching dashboard data:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchAdmin()
-    }, [])
+    const { data: admin, isLoading: loading } = useQuery<Admin>({
+        queryKey: ["admin-me"],
+        queryFn: async () => {
+            const res = await api.get<{ user: Admin }>("/auth/me", { credentials: "include" })
+            return res.user
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
 
     if (loading) {
         return (

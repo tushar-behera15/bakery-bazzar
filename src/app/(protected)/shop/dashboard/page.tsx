@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 import { ShopHero } from "./_components/shop-hero"
 import { ShopStats } from "./_components/shop-stats"
@@ -14,22 +14,14 @@ interface Shop {
 }
 
 export default function Page() {
-    const [shop, setShop] = useState<Shop | null>(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchShop = async () => {
-            try {
-                const res = await api.get<{ shop: Shop }>("/shop/me", { credentials: "include" })
-                setShop(res.shop)
-            } catch (error: unknown) { // Explicitly type error as unknown
-                console.error("Error fetching shop for dashboard:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchShop()
-    }, [])
+    const { data: shop, isLoading: loading } = useQuery<Shop>({
+        queryKey: ["shop-me"],
+        queryFn: async () => {
+            const res = await api.get<{ shop: Shop }>("/shop/me", { credentials: "include" })
+            return res.shop
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
 
     if (loading) {
         return (

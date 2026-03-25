@@ -58,6 +58,7 @@ import {
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { format } from "date-fns"
 
@@ -112,7 +113,7 @@ function OrderDrawer({ order }: { order: OrderType }) {
                     <div className="text-sm">You can manage this order from this drawer.</div>
                 </div>
                 <DrawerFooter className="flex gap-2">
-                    <Button>Update</Button>
+                    <Button onClick={() => toast.success("Order update functionality coming soon!")}>Update</Button>
                     <DrawerClose asChild>
                         <Button variant="outline">Close</Button>
                     </DrawerClose>
@@ -184,10 +185,19 @@ const columns: ColumnDef<OrderType>[] = [
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem>View</DropdownMenuItem>
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toast.info("Viewing order details...")}>View</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toast.info("Editing order...")}>Edit</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive">Cancel Order</DropdownMenuItem>
+                    <DropdownMenuItem 
+                        variant="destructive" 
+                        onClick={() => toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
+                            loading: "Cancelling order...",
+                            success: "Order cancelled successfully!",
+                            error: "Failed to cancel order",
+                        })}
+                    >
+                        Cancel Order
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         ),
@@ -283,38 +293,31 @@ export function OrdersTable({ data }: { data: OrderType[] }) {
 
 // Default export
 export default function OrdersDataTable() {
-    const [orders, setOrders] = React.useState<OrderType[]>([])
-    const [loading, setLoading] = React.useState(true)
+    const { data: orders = [], isLoading: loading, isError, error } = useQuery<OrderType[], Error>({
+        queryKey: ["shop-orders"],
+        queryFn: async () => {
+            // Step 1: Get the current shop info
+            const shopRes = await api.get<{ shop: { id: number } }>("/shop/me", {
+                credentials: "include"
+            })
+
+            if (!shopRes.shop?.id) {
+                throw new Error("Shop not found")
+            }
+
+            // Step 2: Fetch orders for this shop
+            return await api.get<OrderType[]>(`/orders/shop/${shopRes.shop.id}`, {
+                credentials: "include"
+            })
+        },
+        staleTime: 1000 * 60 * 5,
+    })
 
     React.useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                // Step 1: Get the current shop info
-                const shopRes = await api.get<{ shop: { id: number } }>("/shop/me", {
-                    credentials: "include"
-                })
-
-                if (!shopRes.shop?.id) {
-                    toast.error("Shop not found")
-                    return
-                }
-
-                // Step 2: Fetch orders for this shop
-                const ordersData = await api.get<OrderType[]>(`/orders/shop/${shopRes.shop.id}`, {
-                    credentials: "include"
-                })
-
-                setOrders(ordersData)
-            } catch (error) {
-                console.error("Failed to fetch orders:", error)
-                toast.error("Failed to load orders")
-            } finally {
-                setLoading(false)
-            }
+        if (isError && error) {
+            toast.error(error.message || "Failed to fetch orders. Please try again later.")
         }
-
-        fetchOrders()
-    }, [])
+    }, [isError, error])
 
     if (loading) {
         return (

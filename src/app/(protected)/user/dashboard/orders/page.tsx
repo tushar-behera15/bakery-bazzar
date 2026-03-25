@@ -59,6 +59,8 @@ import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 import { format } from "date-fns"
+import { useQuery } from "@tanstack/react-query"
+
 
 // 🧾 Order Schema (Updated to match backend response)
 export const orderSchema = z.object({
@@ -301,41 +303,34 @@ export function OrdersTable({ data }: { data: OrderType[] }) {
 
 // Default export
 export default function OrdersDataTable() {
-    const [orders, setOrders] = React.useState<OrderType[]>([])
-    const [loading, setLoading] = React.useState(true)
+    const { data: orders = [], isLoading: loading, isError, error } = useQuery<OrderType[], Error>({
+        queryKey: ["user-orders"],
+        queryFn: async () => {
+            // Step 1: Get current user info
+            const userRes = await fetch("http://localhost:5000/api/auth/me", {
+                credentials: "include"
+            })
+            
+            if (!userRes.ok) throw new Error("Failed to fetch user session")
+            const userData = await userRes.json()
+            
+            if (!userData.user?.id) {
+                throw new Error("User session not found")
+            }
+
+            // Step 2: Fetch orders for this user using query parameter
+            return await api.get<OrderType[]>(`/orders?buyerId=${userData.user.id}`, {
+                credentials: "include"
+            })
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
 
     React.useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                // Step 1: Get current user info
-                const userRes = await fetch("http://localhost:5000/api/auth/me", {
-                    credentials: "include"
-                })
-                
-                if (!userRes.ok) throw new Error("Failed to fetch user")
-                const userData = await userRes.json()
-                
-                if (!userData.user?.id) {
-                    toast.error("User session not found")
-                    return
-                }
-
-                // Step 2: Fetch orders for this user using query parameter
-                const ordersData = await api.get<OrderType[]>(`/orders?buyerId=${userData.user.id}`, {
-                    credentials: "include"
-                })
-
-                setOrders(ordersData)
-            } catch (error) {
-                console.error("Failed to fetch orders:", error)
-                toast.error("Failed to load your orders")
-            } finally {
-                setLoading(false)
-            }
+        if (isError && error) {
+            toast.error(error.message || "Failed to load your orders")
         }
-
-        fetchOrders()
-    }, [])
+    }, [isError, error])
 
     if (loading) {
         return (

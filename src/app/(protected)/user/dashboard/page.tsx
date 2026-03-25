@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { useEffect, useState } from "react"
 import { DashboardHero } from "@/app/(protected)/user/_components/dashboard-hero"
 import { BuyerStats } from "@/app/(protected)/user/_components/buyer-stats"
 import { RecentOrders } from "@/app/(protected)/user/_components/recent-orders"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 
 interface User {
@@ -15,22 +15,14 @@ interface User {
 }
 
 export default function Page() {
-    const [user, setUser] = useState<User | null>(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const res = await api.get<{ user: User }>("/auth/me", { credentials: "include" })
-                setUser(res.user)
-            } catch (error) {
-                console.error("Error fetching user for dashboard:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchUser()
-    }, [])
+    const { data: user, isLoading: loading } = useQuery<User>({
+        queryKey: ["user-me"],
+        queryFn: async () => {
+            const res = await api.get<{ user: User }>("/auth/me", { credentials: "include" })
+            return res.user
+        },
+        staleTime: 1000 * 60 * 5,
+    })
 
     if (loading) {
         return (

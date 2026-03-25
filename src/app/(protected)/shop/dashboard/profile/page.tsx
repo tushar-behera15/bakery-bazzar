@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -31,61 +32,38 @@ interface Shop {
 }
 
 export default function OwnerProfilePage() {
-    const [shop, setShop] = useState<Shop | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [updating, setUpdating] = useState(false);
-
+    const queryClient = useQueryClient()
     const geo = useGeolocation();
 
-    useEffect(() => {
-        const fetchMyShop = async () => {
-            try {
-                const res = await fetch("http://localhost:5000/api/shop/me", {
-                    credentials: "include",
-                });
+    const { data: shop, isLoading: loading } = useQuery<Shop>({
+        queryKey: ["shop-me"],
+        queryFn: async () => {
+            const res = await api.get<{ shop: Shop }>("/shop/me", { credentials: "include" })
+            return res.shop
+        },
+        staleTime: 1000 * 60 * 5,
+    })
 
-                if (!res.ok) throw new Error("Failed to fetch shop");
+    const updateLocationMutation = useMutation({
+        mutationFn: async (coords: { latitude: number; longitude: number }) => {
+            return await api.put("/shop/update", coords, { credentials: "include" })
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["shop-me"] })
+            toast.success("Shop location updated successfully!")
+        },
+        onError: (err) => {
+            console.error(err)
+            toast.error("Failed to update location")
+        }
+    })
 
-                const data = await res.json();
-                setShop(data.shop);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMyShop();
-    }, []);
-
-    const handleUpdateLocation = async () => {
+    const handleUpdateLocation = () => {
         if (!geo.latitude || !geo.longitude) {
             toast.error(geo.error || "Location not detected yet. Please wait or allow permissions.");
             return;
         }
-
-        setUpdating(true);
-        try {
-            const res = await fetch("http://localhost:5000/api/shop/update", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    latitude: geo.latitude,
-                    longitude: geo.longitude
-                })
-            });
-
-            if (!res.ok) throw new Error("Failed to update location");
-
-            setShop(prev => prev ? { ...prev, latitude: geo.latitude, longitude: geo.longitude } : null);
-            toast.success("Shop location updated successfully!");
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to update location");
-        } finally {
-            setUpdating(false);
-        }
+        updateLocationMutation.mutate({ latitude: geo.latitude, longitude: geo.longitude })
     };
 
     if (loading) return <div className="text-center p-20 text-muted-foreground italic">Updating your profile view...</div>;
@@ -229,9 +207,9 @@ export default function OwnerProfilePage() {
                             variant="outline" 
                             className="w-full rounded-xl border-primary/20 hover:bg-primary/5 font-bold gap-2"
                             onClick={handleUpdateLocation}
-                            disabled={updating}
+                            disabled={updateLocationMutation.isPending}
                         >
-                            {updating ? (
+                            {updateLocationMutation.isPending ? (
                                 <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
                             ) : (
                                 <MapPin className="w-4 h-4" />

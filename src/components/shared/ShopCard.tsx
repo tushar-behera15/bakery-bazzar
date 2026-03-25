@@ -4,6 +4,7 @@ import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { Star, MapPin, ArrowRight } from "lucide-react";
 import GlassCard from "@/components/ui/glass-card";
+import { cn } from "@/lib/utils";
 
 interface ShopCardProps {
     id: number;
@@ -37,9 +38,18 @@ export default function ShopCard({ id, name, logo, tagline, rating, address, dis
                     </div>
 
                     {distance !== undefined && distance !== null && (
-                        <div className="absolute top-4 right-4 bg-primary/90 blur-backdrop-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-premium text-primary-foreground animate-in fade-in zoom-in duration-500">
+                        <div className={cn(
+                            "absolute top-4 right-4 blur-backdrop-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-premium text-primary-foreground animate-in fade-in zoom-in duration-500 font-black text-xs",
+                            distance < 0.2 ? "bg-green-500/90 animate-pulse border border-green-400" : 
+                            distance < 0.5 ? "bg-amber-500/90" : 
+                            "bg-primary/90"
+                        )}>
                             <MapPin className="h-3.5 w-3.5 fill-current" />
-                            <span className="text-xs font-black">{distance.toFixed(1)} km away</span>
+                            <span>
+                                {distance < 0.2 ? "You're here!" : 
+                                 distance < 0.5 ? "Nearby" : 
+                                 `${distance.toFixed(1)} km away`}
+                            </span>
                         </div>
                     )}
                 </div>

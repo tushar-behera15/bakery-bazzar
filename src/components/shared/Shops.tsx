@@ -1,31 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useRef } from "react";
 import { IconChefHat, IconMapPin } from "@tabler/icons-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import GlassCard from "@/components/ui/glass-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import SectionTitle from "./SectionTitle";
 import ShopCard from "./ShopCard";
 import croissantImage from "@/assets/croissant.jpg";
+import { RawShop } from "@/types/shop";
 
-interface ProductImage {
-    url: string;
-}
+import { Button } from "@/components/ui/button";
+import { calculateDistance } from "@/utils/geo";
 
-interface Product {
-    images: ProductImage[];
-}
-
-interface RawShop {
-    id: number;
-    name: string;
-    description?: string;
-    address?: string;
-    products?: Product[];
-    distance?: number | null;
-}
+// Remove local interface definitions as they are now imported
 
 interface Shop {
     id: number;
@@ -38,50 +30,45 @@ interface Shop {
 }
 
 export default function ShopsPage() {
-    const { latitude, longitude } = useGeolocation();
-    const [shops, setShops] = useState<Shop[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { latitude, longitude, accuracy, refresh, refreshId } = useGeolocation();
     const [radius, setRadius] = useState<string>("all");
+    
+    // Track the location used for the last server fetch
+    const lastFetchedLocation = useRef<{ lat: number; lng: number } | null>(null);
 
-    useEffect(() => {
-        const fetchShops = async () => {
-            setLoading(true);
-            try {
-                const url = "http://localhost:5000/api/shop?";
-                const params = new URLSearchParams();
-                
-                if (latitude && longitude) {
-                    params.append("lat", latitude.toString());
-                    params.append("lng", longitude.toString());
-                }
-                
-                if (radius !== "all") {
-                    params.append("radius", radius);
-                }
-
-                const res = await fetch(url + params.toString());
-                const data = await res.json();
-                if (data.shops) {
-                    const mappedShops: Shop[] = data.shops.map((s: RawShop) => ({
-                        id: s.id,
-                        name: s.name,
-                        logo: s.products?.[0]?.images?.[0]?.url || croissantImage.src,
-                        tagline: s.description || "Artisan breads & specialty pastries",
-                        rating: 4.8,
-                        address: s.address,
-                        distance: s.distance,
-                    }));
-                    setShops(mappedShops);
-                }
-            } catch (error) {
-                console.error("Failed to fetch shops:", error);
-            } finally {
-                setLoading(false);
+    const { data: shops = [], isLoading: loading } = useQuery<Shop[]>({
+        queryKey: ["shops", latitude, longitude, radius, refreshId],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            if (latitude && longitude) {
+                params.append("lat", latitude.toString());
+                params.append("lng", longitude.toString());
             }
-        };
-        
-        fetchShops();
-    }, [latitude, longitude, radius]);
+            if (radius !== "all") {
+                params.append("radius", radius);
+            }
+            const endpoint = `/shop?${params.toString()}`;
+            const data = await api.get<{ shops: RawShop[] }>(endpoint);
+            if (latitude && longitude) {
+                lastFetchedLocation.current = { lat: latitude, lng: longitude };
+            }
+            return data.shops.map((s: RawShop) => {
+                let distance = s.distance;
+                if (latitude && longitude && s.latitude && s.longitude) {
+                    distance = calculateDistance(latitude, longitude, s.latitude, s.longitude);
+                }
+                return {
+                    id: s.id,
+                    name: s.name,
+                    logo: s.products?.[0]?.images?.[0]?.url || croissantImage.src,
+                    tagline: s.description || "Artisan breads & specialty pastries",
+                    rating: 4.8,
+                    address: s.address,
+                    distance: distance,
+                };
+            });
+        },
+    });
 
     return (
         <section className="py-12 md:py-20 bg-background min-h-screen relative overflow-hidden">
@@ -107,26 +94,47 @@ export default function ShopsPage() {
                         </div>
                         <div className="text-left">
                             <h4 className="font-bold text-foreground">Location-based Search</h4>
-                            <p className="text-xs text-muted-foreground">
-                                {latitude ? "Showing bakeries near you" : "Share location for proximity sorting"}
+                            <p className={cn(
+                                "text-xs font-medium",
+                                !latitude ? "text-amber-500" : "text-muted-foreground"
+                            )}>
+                                {latitude ? "Showing bakeries near you" : "Enable location for proximity sorting"}
                             </p>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 w-full md:w-auto">
-                        <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Search Radius:</span>
-                        <Select value={radius} onValueChange={setRadius}>
-                            <SelectTrigger className="w-full md:w-[180px] bg-background/50 backdrop-blur-sm border-primary/10">
-                                <SelectValue placeholder="Select radius" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Distances</SelectItem>
-                                <SelectItem value="5">Within 5 km</SelectItem>
-                                <SelectItem value="10">Within 10 km</SelectItem>
-                                <SelectItem value="20">Within 20 km</SelectItem>
-                                <SelectItem value="50">Within 50 km</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="flex flex-col items-end gap-1">
+                            <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Search Radius:</span>
+                            {accuracy && accuracy > 2000 && (
+                                <span className="text-[10px] font-bold text-amber-500 animate-pulse">
+                                    Low Accuracy (±{(accuracy / 1000).toFixed(1)}km)
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Select value={radius} onValueChange={setRadius}>
+                                <SelectTrigger className="w-full md:w-[180px] bg-background/50 backdrop-blur-sm border-primary/10">
+                                    <SelectValue placeholder="Select radius" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Distances</SelectItem>
+                                    <SelectItem value="5">Within 5 km</SelectItem>
+                                    <SelectItem value="10">Within 10 km</SelectItem>
+                                    <SelectItem value="20">Within 20 km</SelectItem>
+                                    <SelectItem value="50">Within 50 km</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="rounded-xl border-primary/10 shrink-0"
+                                onClick={refresh}
+                                title="Refresh Location"
+                            >
+                                <IconMapPin className={cn("h-4 w-4", !latitude && "animate-bounce")} />
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
@@ -144,7 +152,7 @@ export default function ShopsPage() {
                         ))
                     ) : shops.length > 0 ? (
                         shops.map((shop) => (
-                            <ShopCard 
+                            <ShopCard
                                 key={shop.id}
                                 id={shop.id}
                                 name={shop.name}

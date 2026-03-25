@@ -57,27 +57,37 @@ import {
 } from "@/components/ui/table"
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
+import { useQuery } from "@tanstack/react-query"
+import { format } from "date-fns"
+
+
 
 // 🧾 Payment Schema
 export const paymentSchema = z.object({
     id: z.number(),
-    buyer: z.string(),
     orderId: z.number(),
-    method: z.enum(["CREDIT_CARD", "DEBIT_CARD", "UPI", "WALLET", "PAYPAL"]),
-    status: z.enum(["PENDING", "COMPLETED", "FAILED", "REFUNDED"]),
+    method: z.enum(["CREDIT_CARD", "DEBIT_CARD", "UPI", "WALLET"]),
+    status: z.enum(["PENDING", "SUCCESS", "COMPLETED", "FAILED", "REFUNDED"]),
     amount: z.number(),
     paidAt: z.string().nullable(),
     createdAt: z.string(),
+    order: z.object({
+        id: z.number(),
+        status: z.string(),
+        items: z.array(z.object({
+            id: z.number(),
+            product: z.object({
+                name: z.string(),
+            }),
+        })),
+    }).optional(),
 })
 
-// 🧁 Dummy Payment Data
-const paymentData: z.infer<typeof paymentSchema>[] = [
-    { id: 98700, buyer: "Rohit Sharma", orderId: 1, method: "CREDIT_CARD", status: "PENDING", amount: 1250, paidAt: null, createdAt: "2025-10-01" },
-    { id: 98701, buyer: "Neha Patel", orderId: 2, method: "UPI", status: "COMPLETED", amount: 500, paidAt: "2025-10-02", createdAt: "2025-10-02" },
-    { id: 98702, buyer: "Amit Yadav", orderId: 3, method: "WALLET", status: "FAILED", amount: 3200, paidAt: null, createdAt: "2025-10-03" },
-    { id: 98703, buyer: "Kiran Mehta", orderId: 4, method: "PAYPAL", status: "COMPLETED", amount: 750, paidAt: "2025-10-04", createdAt: "2025-10-04" },
-    { id: 98704, buyer: "Priya Nair", orderId: 5, method: "DEBIT_CARD", status: "REFUNDED", amount: 1200, paidAt: "2025-10-05", createdAt: "2025-10-05" },
-]
+
+
+
 
 // Drag handle
 function DragHandle({ id }: { id: number }) {
@@ -100,16 +110,22 @@ function PaymentDrawer({ payment }: { payment: z.infer<typeof paymentSchema> }) 
             <DrawerContent>
                 <DrawerHeader>
                     <DrawerTitle>{`${payment.id}`}</DrawerTitle>
-                    <DrawerDescription>Showing payment details for {payment.buyer}.</DrawerDescription>
+                    <DrawerDescription>Showing payment details for your order.</DrawerDescription>
                 </DrawerHeader>
                 <div className="px-4 pb-4">
-                    <div className="text-sm mb-2">Buyer: {payment.buyer}</div>
+                    <div className="text-sm mb-2 font-semibold">Products:</div>
+                    <ul className="text-sm mb-4 list-disc list-inside space-y-1">
+                        {payment.order?.items.map((item) => (
+                            <li key={item.id}>{item.product.name}</li>
+                        )) || <li>No products found</li>}
+                    </ul>
                     <div className="text-sm mb-2">Order ID: {payment.orderId}</div>
+
                     <div className="text-sm mb-2">Amount: ₹{payment.amount}</div>
                     <div className="text-sm mb-2">Method: {payment.method}</div>
                     <div className="text-sm mb-2">Status: {payment.status}</div>
-                    <div className="text-sm mb-2">Paid At: {payment.paidAt ?? "-"}</div>
-                    <div className="text-sm mb-2">Created At: {payment.createdAt}</div>
+                    <div className="text-sm mb-2">Paid At: {payment.paidAt ? format(new Date(payment.paidAt), "MMM d, yyyy HH:mm") : "-"}</div>
+                    <div className="text-sm mb-2">Created At: {format(new Date(payment.createdAt), "MMM d, yyyy HH:mm")}</div>
                     <Separator className="my-4" />
                     <div className="text-sm">You can manage this payment from this drawer.</div>
                 </div>
@@ -144,24 +160,35 @@ const columns: ColumnDef<z.infer<typeof paymentSchema>>[] = [
         ),
     },
     { accessorKey: "id", header: "Payment ID", cell: ({ row }) => <PaymentDrawer payment={row.original} /> },
-    { accessorKey: "buyer", header: "Buyer", cell: ({ row }) => row.original.buyer },
-    { accessorKey: "orderId", header: "Order ID", cell: ({ row }) => row.original.orderId },
+    {
+        id: "products",
+        header: "Product(s)",
+        cell: ({ row }) => {
+            const items = row.original.order?.items || []
+            if (items.length === 0) return "No products"
+            const firstName = items[0].product.name
+            return items.length > 1 ? `${firstName} + ${items.length - 1} more` : firstName
+        }
+    },
+
+
     { accessorKey: "amount", header: "Amount (₹)", cell: ({ row }) => row.original.amount },
     { accessorKey: "method", header: "Method", cell: ({ row }) => row.original.method },
     {
         accessorKey: "status", header: "Status", cell: ({ row }) => (
             <Badge variant="outline" className="flex items-center gap-1">
-                {row.original.status === "COMPLETED" || row.original.status === "REFUNDED" ? (
+                {row.original.status === "COMPLETED" || row.original.status === "SUCCESS" || row.original.status === "REFUNDED" ? (
                     <IconCircleCheckFilled className="fill-green-500" />
                 ) : row.original.status === "PENDING" || row.original.status === "FAILED" ? (
-                    <IconLoader />
+                    <IconLoader className={row.original.status === "PENDING" ? "animate-spin" : ""} />
                 ) : null}
                 {row.original.status}
+
             </Badge>
         )
     },
-    { accessorKey: "paidAt", header: "Paid At", cell: ({ row }) => row.original.paidAt ?? "-" },
-    { accessorKey: "createdAt", header: "Created At", cell: ({ row }) => row.original.createdAt },
+    { accessorKey: "paidAt", header: "Paid At", cell: ({ row }) => row.original.paidAt ? format(new Date(row.original.paidAt), "MMM d, yyyy") : "-" },
+    { accessorKey: "createdAt", header: "Created At", cell: ({ row }) => format(new Date(row.original.createdAt), "MMM d, yyyy") },
     {
         id: "actions",
         cell: () => (
@@ -258,5 +285,45 @@ export function PaymentsTable({ data }: { data: z.infer<typeof paymentSchema>[] 
 
 // Default export
 export default function PaymentsDataTable() {
-    return <PaymentsTable data={paymentData} />
+    const { data: payments = [], isLoading: loading, isError, error } = useQuery<(z.infer<typeof paymentSchema>)[], Error>({
+        queryKey: ["user-payments"],
+        queryFn: async () => {
+            // Step 1: Get current user info
+            const userRes = await fetch("http://localhost:5000/api/auth/me", {
+                credentials: "include"
+            })
+            
+            if (!userRes.ok) throw new Error("Failed to fetch user session")
+            const userData = await userRes.json()
+            
+            if (!userData.user?.id) {
+                throw new Error("User session not found")
+            }
+
+            // Step 2: Fetch payments for this user
+            // Endpoint added to backend: GET /api/payments?buyerId=...
+            return await api.get<(z.infer<typeof paymentSchema>)[]>(`/payments?buyerId=${userData.user.id}`, {
+                credentials: "include"
+            })
+
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
+
+    React.useEffect(() => {
+        if (isError && error) {
+            toast.error(error.message || "Failed to load your payments")
+        }
+    }, [isError, error])
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-96 space-y-4">
+                <IconLoader className="animate-spin w-8 h-8 text-primary" />
+                <span className="text-muted-foreground font-medium animate-pulse">Fetching your payments...</span>
+            </div>
+        )
+    }
+
+    return <PaymentsTable data={payments} />
 }

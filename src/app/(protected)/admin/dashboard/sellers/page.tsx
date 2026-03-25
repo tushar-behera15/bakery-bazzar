@@ -8,7 +8,12 @@ import {
     getCoreRowModel,
     getPaginationRowModel,
     useReactTable,
+    HeaderGroup,
+    Header,
+    Row as TableRowType
 } from "@tanstack/react-table";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 import {
     DndContext,
@@ -170,35 +175,30 @@ function ShopDrawer({ shop }: { shop: Shop }) {
 // 🧭 MAIN TABLE
 export default function ShopTable() {
     const [rows, setRows] = React.useState<Shop[]>([]);
-    const [loading, setLoading] = React.useState(true);
+    const { data: shopsData, isLoading: loading } = useQuery<Shop[]>({
+        queryKey: ["admin-all-shops"],
+        queryFn: async () => {
+            const res = await api.get<{ shops: Shop[] }>("/shop", { credentials: "include" })
+            return Array.isArray(res) ? res : res.shops
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
 
     React.useEffect(() => {
-        async function fetchShops() {
-            try {
-                const res = await fetch("http://localhost:5000/api/shop", {
-                    credentials: "include",
-                });
-                if (!res.ok) throw new Error("Failed to fetch shops");
-                const data = await res.json();
-                setRows(data.shops || data); // data.shops if it's the wrapped response, or just data if it's the array
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
+        if (shopsData) {
+            setRows(shopsData)
         }
-        fetchShops();
-    }, []);
+    }, [shopsData])
 
     const columns: ColumnDef<Shop>[] = [
         {
             id: "drag",
             header: () => null,
-            cell: ({ row }) => <DragHandle id={row.original.id} />,
+            cell: ({ row }: { row: TableRowType<Shop> }) => <DragHandle id={row.original.id} />,
         },
         {
             id: "select",
-            header: ({ table }) => (
+            header: ({ table }: { table: any }) => ( // Using any for table for simplicity as it's a complex type
                 <Checkbox
                     checked={
                         table.getIsAllPageRowsSelected() ||
@@ -209,7 +209,7 @@ export default function ShopTable() {
                     }
                 />
             ),
-            cell: ({ row }) => (
+            cell: ({ row }: { row: TableRowType<Shop> }) => (
                 <Checkbox
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) =>
@@ -221,12 +221,12 @@ export default function ShopTable() {
         {
             accessorKey: "name",
             header: "Shop Name",
-            cell: ({ row }) => <ShopDrawer shop={row.original} />,
+            cell: ({ row }: { row: TableRowType<Shop> }) => <ShopDrawer shop={row.original} />,
         },
         {
             id: "owner",
             header: "Seller",
-            cell: ({ row }) => row.original.owner.name,
+            cell: ({ row }: { row: TableRowType<Shop> }) => row.original.owner.name,
         },
         {
             accessorKey: "contactEmail",
@@ -235,7 +235,7 @@ export default function ShopTable() {
         {
             id: "products",
             header: "Products",
-            cell: ({ row }) => (
+            cell: ({ row }: { row: TableRowType<Shop> }) => (
                 <Badge variant="secondary">
                     {row.original.products.length}
                 </Badge>
@@ -244,7 +244,7 @@ export default function ShopTable() {
         {
             id: "status",
             header: "Status",
-            cell: ({ row }) => (
+            cell: ({ row }: { row: TableRowType<Shop> }) => (
                 <Badge
                     variant={row.original.isActive ? "default" : "destructive"}
                 >
@@ -318,9 +318,9 @@ export default function ShopTable() {
                 >
                     <Table>
                         <TableHeader>
-                            {table.getHeaderGroups().map((group) => (
+                            {table.getHeaderGroups().map((group: HeaderGroup<Shop>) => (
                                 <TableRow key={group.id}>
-                                    {group.headers.map((header) => (
+                                    {group.headers.map((header: Header<Shop, any>) => (
                                         <TableHead key={header.id}>
                                             {flexRender(
                                                 header.column.columnDef.header,
@@ -333,7 +333,7 @@ export default function ShopTable() {
                         </TableHeader>
 
                         <TableBody>
-                            {table.getRowModel().rows.map((row) => (
+                            {table.getRowModel().rows.map((row: TableRowType<Shop>) => (
                                 <DraggableRow key={row.id} row={row} />
                             ))}
                         </TableBody>

@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import GlassCard from "@/components/ui/glass-card"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
+import GlassCard from "@/components/ui/glass-card"
 import {
     Users,
     Store,
@@ -15,21 +15,18 @@ import { User } from "@/types/user"
 import { Shop } from "@/types/shop"
 
 export function AdminStats() {
-    const [stats, setStats] = useState({
+    const { data: stats = {
         totalUsers: 0,
         totalShops: 0,
         totalOrders: 0,
         totalRevenue: 0
-    })
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchSystemStats = async () => {
+    }, isLoading: loading } = useQuery({
+        queryKey: ["admin-system-stats"],
+        queryFn: async () => {
             try {
-                // Fetching multiple metrics for system-wide overview
                 const [usersRes, shopsRes, ordersRes] = await Promise.all([
-                    api.get<User[]>("/users", { credentials: "include" }), // Assuming admin can fetch all
-                    api.get<Shop[] | { shops: Shop[] }>("/shop", { credentials: "include" }), // Public or admin endpoint
+                    api.get<User[]>("/users", { credentials: "include" }),
+                    api.get<Shop[] | { shops: Shop[] }>("/shop", { credentials: "include" }),
                     api.get<Order[]>("/orders/all/admin", { credentials: "include" })
                 ])
 
@@ -39,28 +36,24 @@ export function AdminStats() {
 
                 const shopData = Array.isArray(shopsRes) ? shopsRes : (shopsRes && 'shops' in shopsRes ? (shopsRes as { shops: Shop[] }).shops : []);
 
-                setStats({
+                return {
                     totalUsers: usersRes.length,
                     totalShops: shopData.length,
                     totalOrders: ordersRes.length,
                     totalRevenue: totalRev
-                })
+                }
             } catch (error) {
                 console.error("Error fetching system stats:", error)
-                // Fallback dummy data if endpoints are not fully set for admin yet
-                setStats({
+                return {
                     totalUsers: 142,
                     totalShops: 28,
                     totalOrders: 856,
                     totalRevenue: 245000
-                })
-            } finally {
-                setLoading(false)
+                }
             }
-        }
-
-        fetchSystemStats()
-    }, [])
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
 
     const statConfig = [
         {

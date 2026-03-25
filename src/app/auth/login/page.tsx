@@ -1,5 +1,5 @@
 'use client'
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,27 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
+
     const router = useRouter();
+    
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const res = await fetch("http://localhost:5000/api/auth/me", { credentials: "include" });
+                if (res.ok) {
+                    router.push("/");
+                } else {
+                    setIsChecking(false);
+                }
+            } catch {
+                setIsChecking(false);
+            }
+
+        };
+        checkAuth();
+    }, [router]);
+
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,7 +64,17 @@ const Login = () => {
         }
     };
 
+    if (isChecking) {
+        return (
+            <div className="h-screen flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 mesh-gradient dark:mesh-gradient-dark -z-10" />
+                <div className="h-8 w-8 border-4 border-primary border-t-transparent animate-spin rounded-full" />
+            </div>
+        );
+    }
+
     return (
+
         <div className="h-screen flex flex-col relative overflow-hidden selection:bg-primary/30 selection:text-primary">
             {/* Background Mesh Gradient */}
             <div className="absolute inset-0 mesh-gradient dark:mesh-gradient-dark -z-10" />

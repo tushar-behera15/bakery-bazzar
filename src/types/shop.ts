@@ -1,5 +1,24 @@
 import { Product } from "./product";
 
+export interface RawProductImage {
+    url: string;
+}
+
+export interface RawProduct {
+    images: RawProductImage[];
+}
+
+export interface RawShop {
+    id: number;
+    name: string;
+    description?: string;
+    address?: string;
+    products?: RawProduct[];
+    latitude?: number | null;
+    longitude?: number | null;
+    distance?: number | null;
+}
+
 export interface Shop {
     id: number;
     name: string;

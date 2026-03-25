@@ -33,7 +33,11 @@ import {
     Row,
     SortingState,
     useReactTable,
+    HeaderGroup,
+    Header,
 } from "@tanstack/react-table";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -168,29 +172,55 @@ function DraggableRow({ row }: { row: Row<Category> }) {
 
 // 🧭 Main Component
 export function CategoriesTable() {
+    const queryClient = useQueryClient();
     const [rows, setRows] = React.useState<Category[]>([]);
-    const [loading, setLoading] = React.useState(true);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [openDialog, setOpenDialog] = React.useState(false);
     const [newCategory, setNewCategory] = React.useState("");
-    const [createLoading, setcreateLoading] = React.useState(false);
 
-    // Fetch categories
+    const { data: categoriesData, isLoading: loading } = useQuery<Category[]>({
+        queryKey: ["admin-categories"],
+        queryFn: async () => {
+            return await api.get<Category[]>("/category", { credentials: "include" });
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+
     React.useEffect(() => {
-        async function fetchCategories() {
-            try {
-                const res = await fetch("http://localhost:5000/api/category");
-                if (!res.ok) throw new Error("Failed to fetch categories");
-                const data: Category[] = await res.json();
-                setRows(data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
+        if (categoriesData) {
+            setRows(categoriesData);
         }
-        fetchCategories();
-    }, []);
+    }, [categoriesData]);
+
+    const createMutation = useMutation({
+        mutationFn: async (name: string) => {
+            return await api.post<Category>("/category", { name }, { credentials: "include" });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+            toast.success("Category created successfully!");
+            setNewCategory("");
+            setOpenDialog(false);
+        },
+        onError: (err) => {
+            console.error(err);
+            toast.error("Failed to create category");
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: number) => {
+            return await api.delete(`/category/${id}`, { credentials: "include" });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+            toast.success("Category deleted successfully!");
+        },
+        onError: (err) => {
+            console.error(err);
+            toast.error("Something went wrong while deleting category");
+        }
+    });
 
     // Sensors for DnD
     const sensors = useSensors(
@@ -202,41 +232,12 @@ export function CategoriesTable() {
     // Create Category
     async function handleCreateCategory() {
         if (!newCategory.trim()) return;
-        setcreateLoading(true);
-        try {
-            const res = await fetch("http://localhost:5000/api/category", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: newCategory }),
-            });
-            if (!res.ok) throw new Error("Failed to create category");
-            const created = await res.json();
-            setRows((prev) => [...prev, created]);
-            toast.success("Category created successfully!");
-            setNewCategory("");
-            setOpenDialog(false);
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to create category");
-
-        } finally {
-            setcreateLoading(false);
-        }
+        createMutation.mutate(newCategory);
     }
 
     // Delete Category
     async function deleteCategory(id: number) {
-        try {
-            const res = await fetch(`http://localhost:5000/api/category/${id}`, {
-                method: "DELETE",
-            });
-            if (!res.ok) throw new Error("Failed to delete category");
-            setRows((prev) => prev.filter((cat) => cat.id !== id));
-            toast.success("Category deleted successfully!");
-        } catch (err) {
-            console.error(err);
-            toast.error("Something went wrong while deleting category");
-        }
+        deleteMutation.mutate(id);
     }
 
     // Columns (use row from cell context for delete)
@@ -360,9 +361,9 @@ export function CategoriesTable() {
                         <DialogFooter>
                             <Button
                                 onClick={handleCreateCategory}
-                                disabled={createLoading}
+                                disabled={createMutation.isPending}
                             >
-                                {createLoading ? "Creating..." : "Create"}
+                                {createMutation.isPending ? "Creating..." : "Create"}
                             </Button>
                             <Button variant="outline" onClick={() => setOpenDialog(false)}>
                                 Cancel
@@ -380,9 +381,9 @@ export function CategoriesTable() {
             >
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
-                        {table.getHeaderGroups().map((headerGroup) => (
+                        {table.getHeaderGroups().map((headerGroup: HeaderGroup<Category>) => (
                             <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
+                                {headerGroup.headers.map((header: Header<Category, unknown>) => (
                                     <TableHead key={header.id}>
                                         {flexRender(
                                             header.column.columnDef.header,

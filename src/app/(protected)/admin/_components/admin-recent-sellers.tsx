@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import GlassCard from "@/components/ui/glass-card"
 import { api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
+import GlassCard from "@/components/ui/glass-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Store, ChevronRight, Loader2, Calendar } from "lucide-react"
@@ -11,25 +11,14 @@ import Link from "next/link"
 import { Shop } from "@/types/shop"
 
 export function AdminRecentSellers() {
-    const [shops, setShops] = useState<Shop[]>([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchRecentShops = async () => {
-            try {
-                const res = await api.get<Shop[] | { shops: Shop[] }>("/shop", { credentials: "include" })
-                const shopData = Array.isArray(res) ? res : res.shops;
-                // Latest 5 shops
-                setShops(shopData.slice(0, 5))
-            } catch (error) {
-                console.error("Error fetching recent shops for admin:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchRecentShops()
-    }, [])
+    const { data: shops = [], isLoading: loading } = useQuery<Shop[]>({
+        queryKey: ["admin-recent-shops"],
+        queryFn: async () => {
+            const res = await api.get<Shop[] | { shops: Shop[] }>("/shop", { credentials: "include" })
+            return Array.isArray(res) ? res.slice(0, 5) : res.shops.slice(0, 5)
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
 
     return (
         <GlassCard className="border-none shadow-xl overflow-hidden px-4 lg:px-6">

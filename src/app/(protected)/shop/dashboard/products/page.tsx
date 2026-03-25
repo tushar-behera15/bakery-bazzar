@@ -37,7 +37,12 @@ import {
     Row,
     SortingState,
     useReactTable,
+    HeaderGroup,
+    Header,
+    Row as TableRowType
 } from "@tanstack/react-table"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { api } from "@/lib/api"
 import { z } from "zod"
 
 import { Badge } from "@/components/ui/badge"
@@ -164,12 +169,11 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof productSchema>> }) {
 
 // Main table
 export function ProductTable() {
+    const queryClient = useQueryClient()
     const [rows, setRows] = React.useState<z.infer<typeof productSchema>[]>([])
     const [categories, setCategories] = React.useState<{ id: number; name: string }[]>([])
     const [sorting, setSorting] = React.useState<SortingState>([])
-    const [loading, setLoading] = React.useState(true)
     const [openDialog, setOpenDialog] = React.useState(false)
-    const [createLoading, setCreateLoading] = React.useState(false)
 
     const initialProduct = {
         name: "",
@@ -186,114 +190,92 @@ export function ProductTable() {
 
     const [newProduct, setNewProduct] = React.useState<typeof initialProduct>(initialProduct)
 
+    const { data: productsData, isLoading: loading } = useQuery({
+        queryKey: ["shop-products"],
+        queryFn: async () => {
+            const [dataShop, dataCategories] = await Promise.all([
+                api.get<{ shop: any }>("/shop/me", { credentials: "include" }),
+                api.get<any[]>("/category")
+            ]);
+
+            setCategories(dataCategories);
+
+            const dataProducts = dataShop.shop?.products || [];
+            return dataProducts.map((p: any) => {
+                const categoryObj = dataCategories.find((c: any) => c.id === p.categoryId)
+                const categoryName = categoryObj?.name || "N/A"
+                const imageUrl = p.images?.find((img: any) => img.isThumbnail)?.url || p.image || null;
+
+                return {
+                    id: p.id,
+                    name: p.name,
+                    description: p.description,
+                    price: p.price,
+                    quantity: p.quantity,
+                    sku: p.sku,
+                    category: categoryName,
+                    isActive: !!p.isActive,
+                    image: imageUrl,
+                };
+            });
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+
     React.useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [resShop, resCategories] = await Promise.all([
-                    fetch("http://localhost:5000/api/shop/me", { credentials: "include" }),
-                    fetch("http://localhost:5000/api/category")
-                ]);
+        if (productsData) {
+            setRows(productsData);
+        }
+    }, [productsData]);
 
-                const dataShop = await resShop.json();
-                const dataCategories = await resCategories.json();
-                const dataProducts = dataShop.shop?.products || [];
+    const createMutation = useMutation({
+        mutationFn: async (productData: any) => {
+            // STEP 1: Create product
+            const res = await api.post<{ newProduct: any }>("/product", productData, { credentials: "include" });
+            const createdProduct = res.newProduct;
 
-                const parsedProducts = dataProducts.map((p: any) => {
-                    // Find category object by p.categoryId
-                    const categoryObj = dataCategories.find((c: any) => c.id === p.categoryId)
-                    const categoryName = categoryObj?.name || "N/A"
+            // STEP 2: Upload image
+            const formData = new FormData()
+            formData.append("image", newProduct.file!)
+            formData.append("productId", String(createdProduct.id))
+            formData.append("isThumbnail", "true")
 
-                    // Get image: prefer thumbnail if exists
-                    const imageUrl = p.images?.find((img: any) => img.isThumbnail)?.url || p.image || null;
+            const uploadRes = await api.post<{ productImage: { url: string } }>("/upload/image", formData, { credentials: "include", headers: {} }); // Let fetch handle multipart headers
+            return { ...createdProduct, image: uploadRes.productImage.url };
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["shop-products"] });
+            toast.success("Product created successfully!");
+            setOpenDialog(false);
+            setNewProduct(initialProduct);
+        },
+        onError: (err) => {
+            console.error(err);
+            toast.error(err instanceof Error ? err.message : "Failed to create product");
+        }
+    });
 
-                    return {
-                        id: p.id,
-                        name: p.name,
-                        description: p.description,
-                        price: p.price,
-                        quantity: p.quantity,
-                        sku: p.sku,
-                        category: categoryName, // <-- set category string
-                        isActive: !!p.isActive,
-                        image: imageUrl,
-                    };
-                });
-
-
-                setRows(parsedProducts);
-                setCategories(dataCategories);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
+    const deleteMutation = useMutation({
+        mutationFn: async (id: number) => {
+            return await api.delete(`/product/${id}`, { credentials: "include" });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["shop-products"] });
+            toast.success("Product deleted successfully!");
+        },
+        onError: (err) => {
+            console.error(err);
+            toast.error("Something went wrong while deleting product");
+        }
+    });
 
     const handleCreateProduct = async () => {
         if (!newProduct.file) {
             toast.error("Please select an image")
             return
         }
-
-        setCreateLoading(true)
-        try {
-            // STEP 1: Create product without image
-            const productData = { ...newProduct, image: "" }
-            const res = await fetch("http://localhost:5000/api/product", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(productData),
-                credentials: "include",
-            })
-
-            if (!res.ok) throw new Error("Failed to create product")
-
-            const createdProductRes = await res.json()
-            const createdProduct = createdProductRes.newProduct // ✅ extract the actual product
-            console.log(createdProduct);
-            if (!createdProduct?.id) throw new Error("Product ID not returned from API")
-
-            // STEP 2: Upload image
-            const formData = new FormData()
-            formData.append("image", newProduct.file)
-            formData.append("productId", String(createdProduct.id))
-            formData.append("isThumbnail", "true")
-
-            const uploadRes = await fetch("http://localhost:5000/api/upload/image", {
-                method: "POST",
-                body: formData,
-                credentials: "include",
-            })
-
-            if (!uploadRes.ok) {
-                const errData = await uploadRes.json()
-                throw new Error(errData.error || "Image upload failed")
-            }
-
-            const uploadData = await uploadRes.json()
-            const imageUrl = uploadData.productImage.url
-
-            // Find category name from categories array
-            const categoryName = categories.find(c => c.id === createdProduct.categoryId)?.name || "N/A"
-
-            // Update table immediately
-            setRows(prev => [
-                ...prev,
-                { ...createdProduct, image: imageUrl, category: categoryName }
-            ])
-
-            toast.success("Product created successfully!")
-            setOpenDialog(false)
-            setNewProduct(initialProduct)
-        } catch (err) {
-            console.error(err)
-            toast.error((err as Error).message)
-        } finally {
-            setCreateLoading(false)
-        }
+        const productData = { ...newProduct, image: "" }
+        createMutation.mutate(productData)
     }
 
     const handleUploadImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,17 +291,7 @@ export function ProductTable() {
     }
 
     async function deleteProduct(id: number) {
-        try {
-            const res = await fetch(`http://localhost:5000/api/product/${id}`, {
-                method: "DELETE",
-            });
-            if (!res.ok) throw new Error("Failed to delete product");
-            setRows((prev) => prev.filter((p) => p.id !== id));
-            toast.success("Product deleted successfully!");
-        } catch (err) {
-            console.error(err);
-            toast.error("Something went wrong while deleting product");
-        }
+        deleteMutation.mutate(id)
     }
 
     React.useEffect(() => {
@@ -360,7 +332,7 @@ export function ProductTable() {
         {
             accessorKey: "isActive",
             header: "Status",
-            cell: ({ row }) => (
+            cell: ({ row }: { row: TableRowType<z.infer<typeof productSchema>> }) => (
                 <Badge variant="outline" className="flex items-center gap-1">
                     {row.original.isActive ? <IconCircleCheckFilled className="fill-green-500" /> : <IconLoader />}
                     {row.original.isActive ? "Available" : "Unavailable"}
@@ -504,9 +476,9 @@ export function ProductTable() {
                         </div>
 
                         <DialogFooter>
-                            <Button onClick={handleCreateProduct} disabled={createLoading}>
-                                {createLoading && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
-                                {createLoading ? "Creating..." : "Create"}
+                            <Button onClick={handleCreateProduct} disabled={createMutation.isPending}>
+                                {createMutation.isPending && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
+                                {createMutation.isPending ? "Creating..." : "Create"}
                             </Button>
                             <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
                         </DialogFooter>
@@ -517,9 +489,9 @@ export function ProductTable() {
             <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]} sensors={sensors}>
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
-                        {table.getHeaderGroups().map(headerGroup => (
+                        {table.getHeaderGroups().map((headerGroup: HeaderGroup<z.infer<typeof productSchema>>) => (
                             <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map(header => (
+                                {headerGroup.headers.map((header: Header<z.infer<typeof productSchema>, any>) => (
                                     <TableHead key={header.id}>
                                         {flexRender(header.column.columnDef.header, header.getContext())}
                                     </TableHead>

@@ -1,10 +1,10 @@
 'use client'
 
-import { ArrowRight, Clock, Shield, Sparkles, Star, Zap } from "lucide-react";
+import { ArrowRight, Clock, Shield, Sparkles, Star, Zap, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import middleImage from "@/assets/hero-section.jpg";
 import croissantImage from "@/assets/croissant.jpg";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import Footer from "@/components/shared/Footer";
@@ -13,6 +13,11 @@ import ShopCard from "@/components/shared/ShopCard";
 import GlassCard from "@/components/ui/glass-card";
 import { cn } from "@/lib/utils";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { api } from "@/lib/api";
+import { RawShop } from "@/types/shop";
+import { useQuery } from "@tanstack/react-query";
+
+import { calculateDistance } from "@/utils/geo";
 
 interface Shop {
     id: number;
@@ -25,45 +30,47 @@ interface Shop {
 }
 
 const HomePage = () => {
-    const { latitude, longitude } = useGeolocation();
-    const [shops, setShops] = useState<Shop[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { latitude, longitude, accuracy, refresh, refreshId } = useGeolocation();
     const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
+    
+    // Track the location used for the last server fetch
+    const lastFetchedLocation = useRef<{ lat: number; lng: number } | null>(null);
+
+    const { data: shops = [], isLoading: loading } = useQuery<Shop[]>({
+        queryKey: ["home-shops", latitude, longitude, refreshId],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            if (latitude && longitude) {
+                params.append("lat", latitude.toString());
+                params.append("lng", longitude.toString());
+            }
+            const endpoint = `/shop?${params.toString()}`;
+            const shopData = await api.get<{ shops: RawShop[] }>(endpoint);
+            if (latitude && longitude) {
+                lastFetchedLocation.current = { lat: latitude, lng: longitude };
+            }
+            if (!shopData.shops) return [];
+            return shopData.shops.slice(0, 5).map((s: RawShop) => {
+                let distance = s.distance;
+                if (latitude && longitude && s.latitude && s.longitude) {
+                    distance = calculateDistance(latitude, longitude, s.latitude, s.longitude);
+                }
+                return {
+                    id: s.id,
+                    name: s.name,
+                    logo: s.products?.[0]?.images?.[0]?.url || croissantImage,
+                    tagline: s.description || "Artisan breads & specialty pastries",
+                    rating: 4.8,
+                    address: s.address,
+                    distance: distance,
+                };
+            });
+        },
+    });
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchUserData = async () => {
             try {
-                // Fetch Shops
-                const params = new URLSearchParams();
-                if (latitude && longitude) {
-                    params.append("lat", latitude.toString());
-                    params.append("lng", longitude.toString());
-                }
-                const shopRes = await fetch(`http://localhost:5000/api/shop?${params.toString()}`);
-                const shopData = await shopRes.json();
-
-                if (shopData.shops) {
-                    const mappedShops: Shop[] = shopData.shops.slice(0, 5).map((s: { 
-                        id: number; 
-                        name: string; 
-                        description?: string; 
-                        address?: string;
-                        distance?: number | null;
-                        products?: { 
-                            images?: { url: string }[]; 
-                        }[] 
-                    }) => ({
-                        id: s.id,
-                        name: s.name,
-                        logo: s.products?.[0]?.images?.[0]?.url || croissantImage,
-                        tagline: s.description || "Artisan breads & specialty pastries",
-                        rating: 4.8,
-                        address: s.address,
-                        distance: s.distance,
-                    }));
-                    setShops(mappedShops);
-                }
-
                 // Fetch User
                 const userRes = await fetch("http://localhost:5000/api/auth/me", {
                     method: "GET",
@@ -72,13 +79,11 @@ const HomePage = () => {
                 const userData = await userRes.json();
                 if (userData.user) setUser(userData.user);
             } catch (err) {
-                console.error("Home page fetch error:", err);
-            } finally {
-                setLoading(false);
+                console.error("Home page user fetch error:", err);
             }
         };
-        fetchData();
-    }, [latitude, longitude]);
+        fetchUserData();
+    }, []);
 
     return (
         <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
@@ -202,10 +207,37 @@ const HomePage = () => {
             {/* Shops Section */}
             <section className="py-24 md:py-32">
                 <div className="container mx-auto px-4">
-                    <SectionTitle
-                        title="Featured Bakeries"
-                        subtitle="We've partnered with the best local artisans to bring you high-quality baked goods."
-                    />
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+                        <SectionTitle
+                            title="Featured Bakeries"
+                            subtitle="We've partnered with the best local artisans to bring you high-quality baked goods."
+                            className="text-left md:text-left mb-0"
+                        />
+                        <div className="flex flex-col items-end gap-2">
+                            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/5 border border-primary/10">
+                                <MapPin className="h-4 w-4 text-primary" />
+                                <span className={cn(
+                                    "text-xs font-bold",
+                                    !latitude ? "text-amber-500" : "text-muted-foreground"
+                                )}>
+                                    {latitude ? "Showing nearest bakeries" : "Enable location to see distances"}
+                                </span>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-6 w-6 ml-2 rounded-lg hover:bg-primary/10"
+                                    onClick={refresh}
+                                >
+                                    <Zap className="h-3 w-3 fill-primary text-primary" />
+                                </Button>
+                            </div>
+                            {accuracy && accuracy > 2000 && (
+                                <span className="text-[10px] font-bold text-amber-500 animate-pulse px-2">
+                                    Low Accuracy (±{(accuracy / 1000).toFixed(1)}km)
+                                </span>
+                            )}
+                        </div>
+                    </div>
 
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 animate-pulse">
