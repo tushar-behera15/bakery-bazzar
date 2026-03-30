@@ -39,6 +39,7 @@ export interface CreateOrderInput {
     price: number;
     quantity: number;
   }[];
+  idempotencyKey?: string;
 }
 
 export interface AddOrderItemInput {

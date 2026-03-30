@@ -22,6 +22,7 @@ interface Product {
     category: { name: string };
     price: number;
     images: { url: string }[];
+    stock_quantity: number;
 }
 
 interface Shop {
@@ -118,7 +119,7 @@ export default function ShopDetails() {
             {/* Shop Header Section */}
             <div className="relative pt-12 pb-20 overflow-hidden">
                 <div className="absolute inset-0 -z-10">
-                    <div className="absolute top-0 left-1/4 w-1/2 h-full bg-primary/5 blur-[120px] rounded-full" />
+                    <div className="absolute top-0 left-1/4 w-1/2 h-full bg-primary/5 dark:bg-primary/10 blur-[120px] rounded-full" />
                 </div>
                 
                 <div className="max-w-7xl mx-auto px-4">
@@ -134,11 +135,11 @@ export default function ShopDetails() {
                         
                         <div className="flex-1 text-center md:text-left space-y-4">
                             <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                                <Badge className="bg-primary/10 text-primary border-none font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                                <Badge className="bg-primary/10 text-primary border-none font-bold px-3 py-1 rounded-full flex items-center gap-1.5 dark:bg-primary/20">
                                     <Star className="h-3.5 w-3.5 fill-current" />
                                     {shop.rating} Rated
                                 </Badge>
-                                <Badge variant="outline" className="border-border text-muted-foreground font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                                <Badge variant="outline" className="border-border text-muted-foreground font-bold px-3 py-1 rounded-full flex items-center gap-1.5 dark:border-white/10 dark:text-muted-foreground/80">
                                     <MapPin className="h-3.5 w-3.5" />
                                     {shop.address || "Local Delivery"}
                                 </Badge>
@@ -161,7 +162,14 @@ export default function ShopDetails() {
                 {shop.products.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         {shop.products.map((product) => (
-                            <GlassCard key={product.id} className="h-full group/card p-0 overflow-hidden border-primary/5 hover:border-primary/20" hover>
+                            <GlassCard 
+                                key={product.id} 
+                                className={cn(
+                                    "h-full group/card p-0 overflow-hidden border-primary/5 hover:border-primary/20 dark:border-white/5 dark:hover:border-white/10",
+                                    product.stock_quantity === 0 && "grayscale contrast-125 brightness-90 opacity-80"
+                                )} 
+                                hover={product.stock_quantity > 0}
+                            >
                                 <div className="relative aspect-square overflow-hidden">
                                     <Image
                                         src={product.images?.[0]?.url || breadImage.src}
@@ -169,6 +177,15 @@ export default function ShopDetails() {
                                         fill
                                         className="object-cover transition-transform duration-700 group-hover/card:scale-110"
                                     />
+                                    
+                                    {product.stock_quantity === 0 && (
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+                                            <div className="px-6 py-2 bg-background/10 backdrop-blur-md border border-white/20 rounded-full">
+                                                <span className="text-white font-black uppercase tracking-[0.2em] text-sm text-center">Out of Stock</span>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <Badge
                                         className="absolute top-4 left-4 bg-background/80 blur-backdrop-sm border-none shadow-premium text-primary font-bold text-[10px] uppercase tracking-widest px-3 py-1"
                                     >
@@ -180,7 +197,7 @@ export default function ShopDetails() {
                                     <div>
                                         <h4 className="font-bold text-lg text-foreground group-hover/card:text-primary transition-colors line-clamp-1">{product.name}</h4>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <div className="flex items-center text-amber-500">
+                                            <div className="flex items-center text-amber-500 dark:text-amber-400">
                                                 <IconSparkles className="h-3 w-3 fill-current" />
                                                 <span className="text-[10px] font-black uppercase tracking-wider ml-1">Handcrafted</span>
                                             </div>
@@ -193,11 +210,11 @@ export default function ShopDetails() {
                                         </span>
                                         <Button
                                             size="icon"
-                                            disabled={addingId === product.id}
+                                            disabled={addingId === product.id || product.stock_quantity === 0}
                                             onClick={() => handleAddToCart(product.id)}
                                             className={cn(
                                                 "h-10 w-10 rounded-xl transition-all duration-300",
-                                                addingId === product.id ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground shadow-soft hover:shadow-premium hover:-translate-y-1"
+                                                (addingId === product.id || product.stock_quantity === 0) ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : "bg-primary text-primary-foreground shadow-soft hover:shadow-premium hover:-translate-y-1"
                                             )}
                                         >
                                             {addingId === product.id ? (

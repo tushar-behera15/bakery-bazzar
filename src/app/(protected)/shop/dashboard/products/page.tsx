@@ -44,6 +44,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { z } from "zod"
+import { cn } from "@/lib/utils"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -95,7 +96,8 @@ export const productSchema = z.object({
     name: z.string(),
     description: z.string().nullable(),
     price: z.number(),
-    quantity: z.number(),
+    stock_quantity: z.number(),
+    low_stock_threshold: z.number(),
     sku: z.string().nullable(),
     category: z.string().nullable(),
     isActive: z.boolean(),
@@ -136,7 +138,8 @@ function ProductDrawer({ product }: { product: z.infer<typeof productSchema> }) 
                     )}
                     <div className="text-sm mb-2">Category: {product.category || "N/A"}</div>
                     <div className="text-sm mb-2">SKU: {product.sku || "N/A"}</div>
-                    <div className="text-sm mb-2">Quantity: {product.quantity}</div>
+                    <div className="text-sm mb-2">Stock: {product.stock_quantity}</div>
+                    <div className="text-sm mb-2">Low Stock Threshold: {product.low_stock_threshold}</div>
                     <div className="text-sm mb-2">Price: ₹{product.price}</div>
                     <Separator className="my-4" />
                     <div className="text-sm">This drawer shows detailed info for the selected product.</div>
@@ -179,7 +182,8 @@ export function ProductTable() {
         name: "",
         description: "",
         price: 0,
-        quantity: 0,
+        stock_quantity: 0,
+        low_stock_threshold: 10,
         sku: "",
         categoryId: 0,
         isActive: true,
@@ -211,7 +215,8 @@ export function ProductTable() {
                     name: p.name,
                     description: p.description,
                     price: p.price,
-                    quantity: p.quantity,
+                    stock_quantity: p.stock_quantity,
+                    low_stock_threshold: p.low_stock_threshold,
                     sku: p.sku,
                     category: categoryName,
                     isActive: !!p.isActive,
@@ -328,7 +333,25 @@ export function ProductTable() {
         { accessorKey: "name", header: "Product Name", cell: ({ row }) => <ProductDrawer product={row.original} /> },
         { accessorKey: "category", header: "Category", cell: ({ row }) => <Badge variant="outline">{row.original.category || "N/A"}</Badge> },
         { accessorKey: "price", header: "Price (₹)", cell: ({ row }) => <>₹{row.original.price}</> },
-        { accessorKey: "quantity", header: "Qty", cell: ({ row }) => <>{row.original.quantity}</> },
+        { 
+            accessorKey: "stock_quantity", 
+            header: "Stock", 
+            cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <span className={cn(
+                        "font-bold",
+                        row.original.stock_quantity <= row.original.low_stock_threshold ? "text-orange-600 animate-pulse" : "text-foreground"
+                    )}>
+                        {row.original.stock_quantity}
+                    </span>
+                    {row.original.stock_quantity <= row.original.low_stock_threshold && (
+                        <Badge variant="destructive" className="h-5 px-1 bg-orange-500/10 text-orange-600 border-orange-500/20 text-[8px] uppercase tracking-tighter">
+                            Low Stock
+                        </Badge>
+                    )}
+                </div>
+            ) 
+        },
         {
             accessorKey: "isActive",
             header: "Status",
@@ -392,10 +415,30 @@ export function ProductTable() {
 
 
 
-    if (loading) return <div className="text-center mt-3">Loading products...</div>
+    if (loading) return <div className="text-center mt-3 text-muted-foreground animate-pulse">Loading products...</div>
+
+    const lowStockProducts = rows.filter(p => p.stock_quantity <= p.low_stock_threshold);
 
     return (
         <div className="w-full p-4">
+            {lowStockProducts.length > 0 && (
+                <div className="mb-6 p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-between shadow-soft animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-600 flex items-center justify-center shrink-0">
+                            <IconLoader className="h-6 w-6 animate-spin-slow" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-black text-orange-600 uppercase tracking-widest">Low Stock Alert</p>
+                            <p className="text-xs text-orange-600/80 font-medium">
+                                {lowStockProducts.length} {lowStockProducts.length === 1 ? "product requires" : "products require"} immediate restocking.
+                            </p>
+                        </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="border-orange-500/20 text-orange-600 hover:bg-orange-500/10">
+                        View Items
+                    </Button>
+                </div>
+            )}
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Products</h2>
                 <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -427,11 +470,18 @@ export function ProductTable() {
                                     onChange={e => setNewProduct(prev => ({ ...prev, price: e.target.value === "" ? 0 : parseFloat(e.target.value) }))}
                                 />
 
-                                <Label>Quantity</Label>
+                                <Label>Stock Quantity</Label>
                                 <Input
                                     type="number"
-                                    value={newProduct.quantity || ""}
-                                    onChange={e => setNewProduct(prev => ({ ...prev, quantity: e.target.value === "" ? 0 : parseInt(e.target.value) }))}
+                                    value={newProduct.stock_quantity || ""}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, stock_quantity: e.target.value === "" ? 0 : parseInt(e.target.value) }))}
+                                />
+
+                                <Label>Low Stock Threshold</Label>
+                                <Input
+                                    type="number"
+                                    value={newProduct.low_stock_threshold || ""}
+                                    onChange={e => setNewProduct(prev => ({ ...prev, low_stock_threshold: e.target.value === "" ? 0 : parseInt(e.target.value) }))}
                                 />
                             </div>
 

@@ -103,7 +103,7 @@ const Navbar = () => {
 
     return (
         <>
-            <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+            <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 dark:border-white/10 dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05)]">
                 <div className="container mx-auto px-4">
                     <div className="flex items-center justify-between h-16 md:h-20">
                         {/* Logo */}
@@ -111,7 +111,7 @@ const Navbar = () => {
                             <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-primary/60 flex items-center justify-center shadow-soft group-hover:shadow-premium transition-all duration-300 group-hover:rotate-12">
                                 <span className="text-xl">🥐</span>
                             </div>
-                            <span className="text-xl font-bold tracking-tight bg-linear-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                            <span className="text-xl font-bold tracking-tight bg-linear-to-r from-foreground to-foreground/70 dark:from-white dark:to-white/80 bg-clip-text text-transparent">
                                 Bakery<span className="text-primary">Bazzar</span>
                             </span>
                         </ProgressBarLink>
@@ -125,8 +125,8 @@ const Navbar = () => {
                                     className={cn(
                                         "px-4 py-1.5 text-sm font-medium transition-all rounded-full relative group/link",
                                         pathname === href
-                                            ? "bg-background text-primary shadow-sm"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                            ? "bg-background text-primary shadow-sm dark:text-white dark:bg-white/10"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-background/50 dark:text-zinc-400 dark:hover:text-white"
                                     )}
                                 >
                                     {label}
@@ -155,7 +155,7 @@ const Navbar = () => {
                                                         ? "admin/dashboard"
                                                         : "user/dashboard"
                                             }
-                                            className="text-sm font-medium hover:text-primary transition-colors pr-2 border-r border-border"
+                                            className="text-sm font-medium hover:text-primary transition-colors pr-2 border-r border-border dark:text-zinc-300 dark:hover:text-primary"
                                         >
                                             {user.name ? user.name.split(" ")[0] : "Profile"}
                                         </ProgressBarLink>

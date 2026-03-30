@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { emitCartUpdate } from "@/utils/cartEvents";
-import { IconTrash, IconMinus, IconPlus, IconShoppingCart, IconReceipt2, IconTruck, IconPercentage } from "@tabler/icons-react";
+import { IconTrash, IconMinus, IconPlus, IconShoppingCart, IconReceipt2, IconChefHat } from "@tabler/icons-react";
 import GlassCard from "@/components/ui/glass-card";
 import SectionTitle from "@/components/shared/SectionTitle";
 import { useRouter } from "next/navigation";
@@ -25,6 +25,8 @@ interface CartItem {
         name: string;
         price: number;
         imageUrl: string;
+        stock_quantity: number;
+        shopName: string;
     };
 }
 
@@ -102,6 +104,8 @@ export default function CartPage() {
 
         setIsPlacing(true);
         try {
+            const idempotencyKey = crypto.randomUUID();
+
             // 1. Create Order and Payment in Backend
             const order = await api.post<Order & { razorpay_order_id: string, key_id: string }>("/orders", {
                 buyerId: user.id,
@@ -110,7 +114,8 @@ export default function CartPage() {
                     productId: i.product.id,
                     price: i.product.price,
                     quantity: i.quantity
-                }))
+                })),
+                idempotencyKey
             });
 
             // 2. Initialize Razorpay Checkout
@@ -124,7 +129,7 @@ export default function CartPage() {
                 handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
                     try {
                         // 3. Verify Payment in Backend
-                        await api.post("/payment/verify", {
+                        await api.post("/payments/verify", {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
@@ -161,16 +166,16 @@ export default function CartPage() {
     };
 
     const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-    const taxes = subtotal * 0.05;
-    const delivery = subtotal >= 500 ? 0 : 14;
+    const taxes = 0; // subtotal * 0.05; (Disabled for now)
+    const delivery = 0; // subtotal >= 500 ? 0 : 14; (Disabled for now)
     const total = subtotal + taxes + delivery;
 
     return (
         <section className="py-12 md:py-20 bg-background min-h-screen relative overflow-hidden">
             {/* Background Decorations */}
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/5 rounded-full blur-[120px]" />
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 dark:bg-primary/10 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/5 dark:bg-accent/10 rounded-full blur-[120px]" />
             </div>
 
             <div className="max-w-7xl mx-auto px-4">
@@ -219,19 +224,31 @@ export default function CartPage() {
                                                 hover
                                             >
                                                 <div className="flex flex-col md:flex-row items-center gap-6">
-                                                    <div className="relative h-28 w-28 md:h-32 md:w-32 rounded-2xl overflow-hidden shadow-soft border border-border/40 shrink-0">
+                                                    <div className={cn(
+                                                        "relative h-28 w-28 md:h-32 md:w-32 rounded-2xl overflow-hidden shadow-soft border border-border/40 shrink-0",
+                                                        item.product.stock_quantity === 0 && "grayscale contrast-125 brightness-90 opacity-80"
+                                                    )}>
                                                         <Image
                                                             src={item.product.imageUrl}
                                                             alt={item.product.name}
                                                             fill
                                                             className="object-cover"
                                                         />
+                                                        {item.product.stock_quantity === 0 && (
+                                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+                                                                <span className="text-white font-black uppercase tracking-tighter text-[10px] text-center px-1">Out of Stock</span>
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     <div className="flex-1 text-center md:text-left space-y-1">
                                                         <h3 className="text-xl font-black text-foreground tracking-tight">
                                                             {item.product.name}
                                                         </h3>
+                                                        <p className="text-sm font-bold text-primary flex items-center gap-1">
+                                                            <IconChefHat className="h-4 w-4" />
+                                                            {item.product.shopName}
+                                                        </p>
                                                         <p className="text-2xl font-black text-primary">
                                                             ₹{item.product.price}
                                                         </p>
@@ -270,8 +287,8 @@ export default function CartPage() {
                                                         </Button>
 
                                                         <div className="text-right">
-                                                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60">Subtotal</p>
-                                                            <p className="text-xl font-black text-foreground">₹{(item.product.price * item.quantity).toFixed(2)}</p>
+                                                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 dark:text-muted-foreground/80">Subtotal</p>
+                                                            <p className="text-xl font-black text-foreground dark:text-white">₹{(item.product.price * item.quantity).toFixed(2)}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -299,6 +316,7 @@ export default function CartPage() {
                                                 <span className="font-bold text-foreground">₹{subtotal.toFixed(2)}</span>
                                             </div>
 
+                                            {/* 
                                             <div className="flex justify-between items-center text-green-600">
                                                 <span className="font-medium flex items-center gap-2">
                                                     <IconPercentage className="h-4 w-4" />
@@ -316,19 +334,27 @@ export default function CartPage() {
                                                     {delivery === 0 ? "FREE" : `₹${delivery}`}
                                                 </span>
                                             </div>
+                                            */}
                                         </div>
 
                                         <div className="pt-6 border-t-2 border-dashed border-border/40">
                                             <div className="flex justify-between items-end mb-8">
                                                 <div className="space-y-0.5">
-                                                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60">Total Amount</p>
-                                                    <p className="text-4xl font-black text-foreground tracking-tighter">₹{total.toFixed(2)}</p>
+                                                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 dark:text-muted-foreground/80">Total Amount</p>
+                                                    <p className="text-4xl font-black text-foreground dark:text-white tracking-tighter">₹{total.toFixed(2)}</p>
                                                 </div>
                                             </div>
 
+                                            {cart.some(i => i.product.stock_quantity === 0) && (
+                                                <div className="mb-6 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                                                    Some items are currently out of stock. Please remove them to proceed.
+                                                </div>
+                                            )}
+
                                             <Button
                                                 onClick={handlePlaceOrder}
-                                                disabled={isPlacing || cart.length === 0}
+                                                disabled={isPlacing || cart.length === 0 || cart.some(i => i.product.stock_quantity === 0)}
                                                 className="w-full h-14 rounded-2xl text-lg font-black tracking-tight shadow-soft hover:shadow-premium bg-linear-to-br from-primary to-primary/80 transition-all group"
                                             >
                                                 {isPlacing ? (
@@ -351,6 +377,7 @@ export default function CartPage() {
                                     </div>
                                 </GlassCard>
 
+                                {/* 
                                 <div className="mt-6 p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                                         <IconTruck className="h-6 w-6" />
@@ -360,6 +387,7 @@ export default function CartPage() {
                                         <p className="text-[10px] text-muted-foreground font-medium">On orders above ₹500</p>
                                     </div>
                                 </div>
+                                */}
                             </div>
                         </div>
                     )}
