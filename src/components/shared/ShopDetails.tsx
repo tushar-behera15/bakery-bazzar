@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { emitCartUpdate } from "@/utils/cartEvents";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { BASE_URL } from "@/lib/api";
+
 import breadImage from "@/assets/bread.jpg";
 import croissantImage from "@/assets/croissant.jpg";
 
@@ -44,7 +46,8 @@ export default function ShopDetails() {
     const handleAddToCart = async (productId: number) => {
         try {
             setAddingId(productId);
-            const res = await fetch("http://localhost:5000/api/cart", {
+            const res = await fetch(`${BASE_URL}/cart`, {
+
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -68,7 +71,8 @@ export default function ShopDetails() {
     useEffect(() => {
         const fetchShop = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/shop/${id}`);
+                const res = await fetch(`${BASE_URL}/shop/${id}`);
+
                 const data = await res.json();
                 if (data.shop) {
                     setShop({

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { BASE_URL } from "@/lib/api";
+
 import {
     Store,
     User,
@@ -48,7 +50,8 @@ export default function SellerSignup() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:5000/api/shop/register", {
+            const res = await fetch(`${BASE_URL}/shop/register`, {
+
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

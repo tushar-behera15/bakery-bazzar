@@ -56,7 +56,8 @@ import {
 } from "@/components/ui/table"
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
-import { api } from "@/lib/api"
+import { api, BASE_URL } from "@/lib/api"
+
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { useQuery } from "@tanstack/react-query"
@@ -307,7 +308,8 @@ export default function OrdersDataTable() {
         queryKey: ["user-orders"],
         queryFn: async () => {
             // Step 1: Get current user info
-            const userRes = await fetch("http://localhost:5000/api/auth/me", {
+            const userRes = await fetch(`${BASE_URL}/auth/me`, {
+
                 credentials: "include"
             })
             

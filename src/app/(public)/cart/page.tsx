@@ -11,7 +11,8 @@ import { IconTrash, IconMinus, IconPlus, IconShoppingCart, IconReceipt2, IconChe
 import GlassCard from "@/components/ui/glass-card";
 import SectionTitle from "@/components/shared/SectionTitle";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, BASE_URL } from "@/lib/api";
+
 import { Order } from "@/types/order";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,7 +40,8 @@ export default function CartPage() {
 
     const fetchCart = async () => {
         try {
-            const res = await fetch("http://localhost:5000/api/cart", {
+            const res = await fetch(`${BASE_URL}/cart`, {
+
                 credentials: "include",
             });
             if (!res.ok) throw new Error("Failed to load cart");
@@ -60,7 +62,8 @@ export default function CartPage() {
     const updateQuantity = async (cartId: number, quantity: number) => {
         if (quantity < 1) return;
         try {
-            await fetch(`http://localhost:5000/api/cart/${cartId}`, {
+            await fetch(`${BASE_URL}/cart/${cartId}`, {
+
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -79,7 +82,8 @@ export default function CartPage() {
 
     const removeItem = async (cartId: number) => {
         try {
-            await fetch(`http://localhost:5000/api/cart/${cartId}`, {
+            await fetch(`${BASE_URL}/cart/${cartId}`, {
+
                 method: "DELETE",
                 credentials: "include",
             });

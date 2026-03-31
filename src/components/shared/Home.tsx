@@ -13,7 +13,8 @@ import ShopCard from "@/components/shared/ShopCard";
 import GlassCard from "@/components/ui/glass-card";
 import { cn } from "@/lib/utils";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { api } from "@/lib/api";
+import { api, BASE_URL } from "@/lib/api";
+
 import { RawShop } from "@/types/shop";
 import { useQuery } from "@tanstack/react-query";
 
@@ -72,7 +73,8 @@ const HomePage = () => {
         const fetchUserData = async () => {
             try {
                 // Fetch User
-                const userRes = await fetch("http://localhost:5000/api/auth/me", {
+                const userRes = await fetch(`${BASE_URL}/auth/me`, {
+
                     method: "GET",
                     credentials: "include",
                 });

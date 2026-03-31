@@ -7,6 +7,8 @@ import GlassCard from "@/components/ui/glass-card";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { BASE_URL } from "@/lib/api";
+
 
 const Signup = () => {
     const [name, setName] = useState("");
@@ -22,7 +24,8 @@ const Signup = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/auth/me", { credentials: "include" });
+                const res = await fetch(`${BASE_URL}/auth/me`, { credentials: "include" });
+
                 if (res.ok) {
                     router.push("/");
                 } else {
@@ -48,7 +51,8 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:5000/api/auth/register", {
+            const res = await fetch(`${BASE_URL}/auth/register`, {
+
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

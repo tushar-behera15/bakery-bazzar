@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BASE_URL } from "@/lib/api";
+
 
 type Role = "BUYER" | "SELLER" | "ADMIN";
 
@@ -27,7 +29,8 @@ export function AuthProvider({
     useEffect(() => {
         const fetchMe = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/auth/me", {
+                const res = await fetch(`${BASE_URL}/auth/me`, {
+
                     credentials: "include",
                 });
 

@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { ProgressBarLink } from "./ProgressLink";
 import { ModeToggle } from "../dashboard-stuffs/mode-toggle";
+import { BASE_URL } from "@/lib/api";
+
 
 interface UserType {
     name?: string;
@@ -34,7 +36,8 @@ const Navbar = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/auth/me", {
+                const res = await fetch(`${BASE_URL}/auth/me`, {
+
                     method: "GET",
                     credentials: "include",
                 });
@@ -57,7 +60,8 @@ const Navbar = () => {
 
     const handleLogout = async () => {
         try {
-            const res = await fetch("http://localhost:5000/api/auth/logout", {
+            const res = await fetch(`${BASE_URL}/auth/logout`, {
+
                 method: "POST",
                 credentials: "include",
             });
@@ -77,7 +81,8 @@ const Navbar = () => {
 
     const fetchCartCount = async () => {
         try {
-            const res = await fetch("http://localhost:5000/api/cart", {
+            const res = await fetch(`${BASE_URL}/cart`, {
+
                 credentials: "include",
             });
 

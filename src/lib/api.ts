@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const BASE_URL = 'http://localhost:5000/api';
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+
 
 /**
  * Custom error class for API errors
