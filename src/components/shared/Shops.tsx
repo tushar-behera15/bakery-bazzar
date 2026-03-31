@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { IconChefHat, IconMapPin } from "@tabler/icons-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import GlassCard from "@/components/ui/glass-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { cn } from "@/lib/utils";
@@ -141,14 +140,21 @@ export default function ShopsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {loading ? (
                         Array.from({ length: 6 }).map((_, i) => (
-                            <GlassCard key={i} className="p-0 overflow-hidden border-primary/5">
+                            <div key={i} className="rounded-3xl border border-border/10 overflow-hidden bg-card/50 px-0">
                                 <Skeleton className="aspect-video w-full" />
                                 <div className="p-6 space-y-4">
-                                    <Skeleton className="h-6 w-3/4" />
-                                    <Skeleton className="h-4 w-1/2" />
-                                    <Skeleton className="h-10 w-full rounded-xl" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-7 w-3/4 rounded-lg" />
+                                        <Skeleton className="h-4 w-full rounded-md" />
+                                        <Skeleton className="h-4 w-2/3 rounded-md" />
+                                    </div>
+                                    <Skeleton className="h-4 w-1/2 rounded-md" />
+                                    <div className="pt-4 border-t border-border/10 flex items-center justify-between">
+                                        <Skeleton className="h-4 w-24 rounded-md" />
+                                        <Skeleton className="h-8 w-8 rounded-full" />
+                                    </div>
                                 </div>
-                            </GlassCard>
+                            </div>
                         ))
                     ) : shops.length > 0 ? (
                         shops.map((shop) => (

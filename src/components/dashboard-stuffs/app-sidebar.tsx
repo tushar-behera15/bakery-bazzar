@@ -19,6 +19,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 
@@ -63,6 +64,8 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { setOpenMobile, isMobile } = useSidebar()
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -72,9 +75,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <Link href="/" passHref>
+              <Link href="/" passHref onClick={() => isMobile && setOpenMobile(false)}>
                 <IconInnerShadowTop className="size-5!" />
-                <span className="text-base font-semibold">Dashboard</span>
+                <span className="text-base font-semibold text-primary">Bakery Bazzar</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

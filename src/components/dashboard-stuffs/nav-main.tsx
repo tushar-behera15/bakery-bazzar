@@ -9,6 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 export function NavMain({
@@ -20,6 +21,7 @@ export function NavMain({
     icon?: Icon
   }[]
 }) {
+  const { setOpenMobile, isMobile } = useSidebar()
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -28,7 +30,7 @@ export function NavMain({
             const IconComponent = item.icon
             return (
               <SidebarMenuItem key={item.title}>
-                <Link href={item.url}>
+                <Link href={item.url} onClick={() => isMobile && setOpenMobile(false)}>
                   <SidebarMenuButton tooltip={item.title}>
                     {IconComponent && <IconComponent className="size-4" />}
                     <span>{item.title}</span>

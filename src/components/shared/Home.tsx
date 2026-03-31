@@ -33,7 +33,7 @@ interface Shop {
 const HomePage = () => {
     const { latitude, longitude, accuracy, refresh, refreshId } = useGeolocation();
     const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
-    
+
     // Track the location used for the last server fetch
     const lastFetchedLocation = useRef<{ lat: number; lng: number } | null>(null);
 
@@ -121,7 +121,7 @@ const HomePage = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-700">
-                            <Link href="/products" className="w-full sm:w-auto">
+                            <Link href="/shops" className="w-full sm:w-auto">
                                 <Button
                                     size="lg"
                                     className="h-16 px-10 text-lg font-black rounded-2xl gap-3 shadow-premium hover:shadow-2xl hover:-translate-y-1.5 transition-all w-full bg-primary text-primary-foreground group"
@@ -224,9 +224,9 @@ const HomePage = () => {
                                 )}>
                                     {latitude ? "Showing nearest bakeries" : "Enable location to see distances"}
                                 </span>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
                                     className="h-6 w-6 ml-2 rounded-lg hover:bg-primary/10"
                                     onClick={refresh}
                                 >
@@ -250,7 +250,7 @@ const HomePage = () => {
                     ) : shops.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {shops.map((shop) => (
-                                <ShopCard 
+                                <ShopCard
                                     key={shop.id}
                                     id={shop.id}
                                     name={shop.name}

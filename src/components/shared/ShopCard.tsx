@@ -54,10 +54,10 @@ export default function ShopCard({ id, name, logo, tagline, rating, address, dis
                     )}
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-5 sm:p-6 space-y-3 sm:space-y-4">
                     <div className="space-y-1">
-                        <h3 className="text-2xl font-black group-hover/card:text-primary transition-colors line-clamp-1 text-foreground">{name}</h3>
-                        <p className="text-muted-foreground font-medium text-sm line-clamp-2">{tagline}</p>
+                        <h3 className="text-xl md:text-2xl font-black group-hover/card:text-primary transition-colors line-clamp-1 text-foreground tracking-tight">{name}</h3>
+                        <p className="text-muted-foreground font-medium text-xs sm:text-sm line-clamp-2">{tagline}</p>
                     </div>
 
                     {address && (

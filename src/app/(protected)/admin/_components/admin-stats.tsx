@@ -99,19 +99,19 @@ export function AdminStats() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4 lg:px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-1 md:px-0">
             {statConfig.map((stat, i) => (
-                <GlassCard key={i} className="group hover:-translate-y-1 transition-all duration-300 border-none shadow-premium relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:bg-primary/10 transition-colors" />
-                    <div className="p-6 flex items-center gap-5">
-                        <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform duration-300`}>
-                            <stat.icon className="h-6 w-6" />
+                <GlassCard key={i} className="group hover:-translate-y-1 transition-all duration-300 border-none shadow-premium relative overflow-hidden p-4 md:p-6">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -mr-10 -mt-10 group-hover:bg-primary/10 transition-colors" />
+                    <div className="flex items-center gap-4 md:gap-5 relative z-10">
+                        <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl shrink-0 ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform duration-300`}>
+                            <stat.icon className="h-5 w-5 md:h-6 md:w-6" />
                         </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">
+                        <div className="space-y-0.5">
+                            <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground tracking-widest leading-none">
                                 {stat.label}
                             </p>
-                            <h3 className="text-2xl font-black tracking-tight">{stat.value}</h3>
+                            <h3 className="text-xl md:text-2xl font-black tracking-tight">{stat.value}</h3>
                         </div>
                     </div>
                 </GlassCard>

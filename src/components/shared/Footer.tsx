@@ -45,7 +45,7 @@ const Footer = () => {
                         <ul className="space-y-4">
                             {[
                                 { name: "Home", href: "/" },
-                                { name: "Products", href: "/products" },
+                                { name: "Shops", href: "/shops" },
                                 { name: "About Us", href: "/about" },
                                 { name: "Contact", href: "/contact" }
                             ].map((link) => (
@@ -62,15 +62,13 @@ const Footer = () => {
                         </ul>
                     </div>
 
-                    {/* Categories */}
+                    {/* Account */}
                     <div>
-                        <h3 className="text-sm font-black mb-6 uppercase tracking-[0.2em] text-foreground/80">Categories</h3>
+                        <h3 className="text-sm font-black mb-6 uppercase tracking-[0.2em] text-foreground/80">My Account</h3>
                         <ul className="space-y-4">
                             {[
-                                { name: "Artisan Bread", href: "/products#bread" },
-                                { name: "French Pastries", href: "/products#pastry" },
-                                { name: "Custom Cakes", href: "/products#cake" },
-                                { name: "Gourmet Cupcakes", href: "/products#cupcake" }
+                                { name: "Order History", href: "/user/dashboard/orders" },
+                                { name: "Shopping Cart", href: "/cart" },
                             ].map((link) => (
                                 <li key={link.name}>
                                     <Link
@@ -95,7 +93,7 @@ const Footer = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Email Us</p>
-                                    <p className="font-bold text-sm">hello@bakerybazzar.com</p>
+                                    <p className="font-bold text-sm">beheratushar523@gmail.com</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
@@ -113,7 +111,7 @@ const Footer = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Visit Us</p>
-                                    <p className="font-bold text-sm">Sweet City, India</p>
+                                    <p className="font-bold text-sm">Gujarat, India</p>
                                 </div>
                             </div>
                         </div>

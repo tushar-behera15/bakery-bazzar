@@ -155,10 +155,10 @@ const Navbar = () => {
                                         <ProgressBarLink
                                             href={
                                                 user.role === "SELLER"
-                                                    ? "shop/dashboard"
+                                                    ? "/shop/dashboard"
                                                     : user.role === "ADMIN"
-                                                        ? "admin/dashboard"
-                                                        : "user/dashboard"
+                                                        ? "/admin/dashboard"
+                                                        : "/user/dashboard"
                                             }
                                             className="text-sm font-medium hover:text-primary transition-colors pr-2 border-r border-border dark:text-zinc-300 dark:hover:text-primary"
                                         >
@@ -270,14 +270,28 @@ const Navbar = () => {
                                     </div>
                                 </div>
                                 <div className="grid gap-2">
+                                    <ProgressBarLink
+                                        href={
+                                            user.role === "SELLER"
+                                                ? "/shop/dashboard"
+                                                : user.role === "ADMIN"
+                                                    ? "/admin/dashboard"
+                                                    : "/user/dashboard"
+                                        }
+                                    >
+                                        <Button className="w-full rounded-xl bg-primary hover:shadow-premium transition-all">
+                                            Go to Dashboard
+                                        </Button>
+                                    </ProgressBarLink>
+                                    
                                     {user.role !== "SELLER" && (
                                         <ProgressBarLink href="/shopauth/register">
-                                            <Button className="w-full rounded-xl bg-linear-to-br from-primary to-primary/80 hover:shadow-premium transition-all">
+                                            <Button variant="outline" className="w-full rounded-xl border-primary/20 text-primary hover:bg-primary/5">
                                                 Become a Seller
                                             </Button>
                                         </ProgressBarLink>
                                     )}
-                                    <Button onClick={handleLogout} variant="outline" className="w-full rounded-xl">
+                                    <Button onClick={handleLogout} variant="ghost" className="w-full rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/5">
                                         Logout
                                     </Button>
                                 </div>

@@ -17,22 +17,22 @@ export function DashboardHero({ userName }: DashboardHeroProps) {
             <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[140%] bg-primary/10 blur-[80px] rounded-full rotate-12 animate-pulse" />
             <div className="absolute bottom-[-30%] left-[-5%] w-[30%] h-[100%] bg-primary/5 blur-[60px] rounded-full" />
             
-            <div className="relative z-10 p-8 md:p-12 w-full min-h-[220px] flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="space-y-4 text-center md:text-left">
-                    <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
+            <div className="relative z-10 p-6 md:p-12 w-full min-h-[200px] flex flex-col md:flex-row justify-between items-center gap-8">
+                <div className="space-y-4 text-center md:text-left flex-1">
+                    <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
                         Welcome back, <span className="text-primary">{userName || "Baker"}</span>!
                     </h1>
-                    <p className="text-muted-foreground text-lg md:text-xl max-w-[500px]">
+                    <p className="text-muted-foreground text-base md:text-lg lg:text-xl max-w-[500px] mx-auto md:mx-0">
                         Your fresh bakes are just a click away. Ready to discover something delicious today?
                     </p>
-                    <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
-                        <Button asChild size="lg" className="rounded-xl px-8 py-6 text-lg font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center md:justify-start pt-2">
+                        <Button asChild size="lg" className="w-full sm:w-auto rounded-xl px-8 h-14 text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
                             <Link href="/">
                                 <ShoppingBag className="mr-2 h-5 w-5" />
                                 Browse Bakery
                             </Link>
                         </Button>
-                        <Button variant="outline" asChild size="lg" className="rounded-xl px-8 py-6 text-lg font-bold border-primary/20 hover:bg-primary/5 transition-all">
+                        <Button variant="outline" asChild size="lg" className="w-full sm:w-auto rounded-xl px-8 h-14 text-base font-bold border-primary/20 hover:bg-primary/5 transition-all">
                             <Link href="/user/dashboard/orders">
                                 Track Orders
                                 <ArrowRight className="ml-2 h-5 w-5" />

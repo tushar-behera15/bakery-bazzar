@@ -85,18 +85,16 @@ export function ShopStats() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4 lg:px-6">
-            {statConfig.map((stat, i) => (
-                <GlassCard key={i} className="group hover:-translate-y-1 transition-all duration-300 border-none shadow-premium">
-                    <div className="p-6 flex items-center gap-5">
-                        <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform duration-300`}>
-                            <stat.icon className="h-6 w-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-1 md:px-0">
+            {statConfig.map((item, index) => (
+                <GlassCard key={index} className="group hover:border-primary/30 transition-all duration-300 p-4 md:p-6">
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl ${item.bg} ${item.color} group-hover:scale-110 transition-transform duration-300`}>
+                            <item.icon className="w-5 h-5 md:w-6 md:h-6" />
                         </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">
-                                {stat.label}
-                            </p>
-                            <h3 className="text-2xl font-black tracking-tight">{stat.value}</h3>
+                        <div className="space-y-0.5">
+                            <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">{item.label}</p>
+                            <h3 className="text-xl md:text-2xl font-black">{item.value}</h3>
                         </div>
                     </div>
                 </GlassCard>

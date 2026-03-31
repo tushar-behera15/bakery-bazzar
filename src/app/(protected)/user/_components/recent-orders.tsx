@@ -36,12 +36,12 @@ export function RecentOrders({ userId }: { userId: number }) {
 
     return (
         <GlassCard className="p-0 overflow-hidden">
-            <div className="p-6 border-b border-primary/10 flex items-center justify-between gap-4">
+            <div className="p-4 sm:p-6 border-b border-primary/10 flex items-center justify-between gap-4">
                 <div>
-                    <h3 className="text-xl font-bold tracking-tight">Recent Orders</h3>
-                    <p className="text-sm text-muted-foreground">Stay updated on your latest purchases</p>
+                    <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight">Recent Orders</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground font-medium">Latest purchases</p>
                 </div>
-                <Button variant="ghost" asChild className="text-primary hover:text-primary hover:bg-primary/5 rounded-xl font-bold whitespace-nowrap">
+                <Button variant="ghost" asChild className="text-primary hover:bg-primary/5 rounded-xl font-bold whitespace-nowrap h-10 px-3 sm:px-4">
                     <Link href="/user/dashboard/orders">
                         View All
                         <ChevronRight className="ml-2 w-4 h-4" />
@@ -52,24 +52,24 @@ export function RecentOrders({ userId }: { userId: number }) {
             <div className="divide-y divide-primary/5">
                 {orders.length > 0 ? (
                     orders.map((order) => (
-                        <div key={order.id} className="p-6 flex items-center justify-between hover:bg-primary/[0.02] transition-colors">
+                        <div key={order.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-primary/[0.02] transition-colors relative">
                             <div className="flex items-center gap-4">
-                                <div className={`p-3 rounded-xl ${order.status === 'COMPLETED' ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}`}>
+                                <div className={`p-3 rounded-xl shrink-0 ${order.status === 'COMPLETED' ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}`}>
                                     {order.status === 'COMPLETED' ? <CheckCircle2 className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
                                 </div>
-                                <div>
-                                    <p className="font-bold">Order #{order.id}</p>
-                                    <p className="text-xs text-muted-foreground">{format(new Date(order.createdAt), "MMMM d, yyyy")}</p>
+                                <div className="space-y-0.5">
+                                    <p className="font-black text-sm sm:text-base">Order #{order.id}</p>
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground font-semibold">{format(new Date(order.createdAt), "MMM d, yyyy")}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-6">
-                                <div className="text-right hidden sm:block">
-                                    <p className="font-bold">₹{order.totalAmount.toFixed(2)}</p>
-                                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider py-0">
+                            <div className="flex items-center justify-between sm:justify-end gap-6 sm:gap-8 border-t sm:border-t-0 border-primary/5 pt-3 sm:pt-0">
+                                <div className="text-left sm:text-right">
+                                    <p className="font-black text-primary text-sm sm:text-base">₹{order.totalAmount.toLocaleString()}</p>
+                                    <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-2 py-0 border-primary/20">
                                         {order.status}
                                     </Badge>
                                 </div>
-                                <Button size="sm" variant="outline" asChild className="rounded-xl border-primary/10 hover:border-primary/30 transition-all">
+                                <Button size="sm" variant="outline" asChild className="rounded-lg sm:rounded-xl border-primary/10 hover:border-primary/30 transition-all font-bold h-9">
                                     <Link href="/user/dashboard/orders">Details</Link>
                                 </Button>
                             </div>
