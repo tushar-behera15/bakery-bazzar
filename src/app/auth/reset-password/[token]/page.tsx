@@ -1,22 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useState } from "react";
+import { useState, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import GlassCard from "@/components/ui/glass-card";
 import { toast } from "sonner";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import Link from "next/link";
 
-const ResetPassword = () => {
+interface ResetPasswordProps {
+    params: Promise<{ token: string }>;
+}
+
+const ResetPassword = ({ params }: ResetPasswordProps) => {
+    const { token } = use(params);
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const params = useParams();
-    const token = params.token as string;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
