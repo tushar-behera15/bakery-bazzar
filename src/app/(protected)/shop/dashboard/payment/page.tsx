@@ -57,27 +57,23 @@ import {
 } from "@/components/ui/table"
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
+import { format } from "date-fns"
 
 // 🧾 Payment Schema
 export const paymentSchema = z.object({
     id: z.number(),
     buyer: z.string(),
     orderId: z.number(),
-    method: z.enum(["CREDIT_CARD", "DEBIT_CARD", "UPI", "WALLET", "PAYPAL"]),
-    status: z.enum(["PENDING", "COMPLETED", "FAILED", "REFUNDED"]),
+    method: z.string(),
+    status: z.string(),
     amount: z.number(),
-    paidAt: z.string().nullable(),
+    paidAt: z.string().nullable().optional(),
     createdAt: z.string(),
+    order: z.any().optional(),
 })
-
-// 🧁 Dummy Payment Data
-const paymentData: z.infer<typeof paymentSchema>[] = [
-    { id: 98700, buyer: "Rohit Sharma", orderId: 1, method: "CREDIT_CARD", status: "PENDING", amount: 1250, paidAt: null, createdAt: "2025-10-01" },
-    { id: 98701, buyer: "Neha Patel", orderId: 2, method: "UPI", status: "COMPLETED", amount: 500, paidAt: "2025-10-02", createdAt: "2025-10-02" },
-    { id: 98702, buyer: "Amit Yadav", orderId: 3, method: "WALLET", status: "FAILED", amount: 3200, paidAt: null, createdAt: "2025-10-03" },
-    { id: 98703, buyer: "Kiran Mehta", orderId: 4, method: "PAYPAL", status: "COMPLETED", amount: 750, paidAt: "2025-10-04", createdAt: "2025-10-04" },
-    { id: 98704, buyer: "Priya Nair", orderId: 5, method: "DEBIT_CARD", status: "REFUNDED", amount: 1200, paidAt: "2025-10-05", createdAt: "2025-10-05" },
-]
 
 // Drag handle
 function DragHandle({ id }: { id: number }) {
@@ -104,12 +100,15 @@ function PaymentDrawer({ payment }: { payment: z.infer<typeof paymentSchema> }) 
                 </DrawerHeader>
                 <div className="px-4 pb-4">
                     <div className="text-sm mb-2">Buyer: {payment.buyer}</div>
-                    <div className="text-sm mb-2">Order ID: {payment.orderId}</div>
+                    <div className="text-sm mb-2 font-medium">
+                        Products: {payment.order?.items?.map((i: any) => i.product?.name).join(", ") || "Unknown"}
+                    </div>
+                    <div className="text-sm mb-2 opacity-70 italic text-[10px]">Order ID: {payment.orderId}</div>
                     <div className="text-sm mb-2">Amount: ₹{payment.amount}</div>
                     <div className="text-sm mb-2">Method: {payment.method}</div>
                     <div className="text-sm mb-2">Status: {payment.status}</div>
-                    <div className="text-sm mb-2">Paid At: {payment.paidAt ?? "-"}</div>
-                    <div className="text-sm mb-2">Created At: {payment.createdAt}</div>
+                    <div className="text-sm mb-2">Paid At: {payment.paidAt ? format(new Date(payment.paidAt), "MMM d, yyyy • hh:mm a") : "-"}</div>
+                    <div className="text-sm mb-2">Created At: {format(new Date(payment.createdAt), "MMM d, yyyy • hh:mm a")}</div>
                     <Separator className="my-4" />
                     <div className="text-sm">You can manage this payment from this drawer.</div>
                 </div>
@@ -145,7 +144,21 @@ const columns: ColumnDef<z.infer<typeof paymentSchema>>[] = [
     },
     { accessorKey: "id", header: "Payment ID", cell: ({ row }) => <PaymentDrawer payment={row.original} /> },
     { accessorKey: "buyer", header: "Buyer", cell: ({ row }) => row.original.buyer },
-    { accessorKey: "orderId", header: "Order ID", cell: ({ row }) => row.original.orderId },
+    { 
+        id: "products", 
+        header: "Product(s)", 
+        cell: ({ row }) => {
+            const items = row.original.order?.items || []
+            if (items.length === 0) return <span className="text-muted-foreground italic">No products</span>
+            const firstProduct = items[0]?.product?.name || "Unknown Product"
+            const extraCount = items.length - 1
+            return (
+                <span className="font-medium text-foreground text-sm">
+                    {firstProduct} {extraCount > 0 && <span className="text-muted-foreground font-normal"> (+{extraCount} more)</span>}
+                </span>
+            )
+        } 
+    },
     { accessorKey: "amount", header: "Amount (₹)", cell: ({ row }) => row.original.amount },
     { accessorKey: "method", header: "Method", cell: ({ row }) => row.original.method },
     {
@@ -160,8 +173,8 @@ const columns: ColumnDef<z.infer<typeof paymentSchema>>[] = [
             </Badge>
         )
     },
-    { accessorKey: "paidAt", header: "Paid At", cell: ({ row }) => row.original.paidAt ?? "-" },
-    { accessorKey: "createdAt", header: "Created At", cell: ({ row }) => row.original.createdAt },
+    { accessorKey: "paidAt", header: "Paid At", cell: ({ row }) => row.original.paidAt ? format(new Date(row.original.paidAt), "MMM d, yyyy") : "-" },
+    { accessorKey: "createdAt", header: "Created At", cell: ({ row }) => format(new Date(row.original.createdAt), "MMM d, yyyy") },
     {
         id: "actions",
         cell: () => (
@@ -198,6 +211,11 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof paymentSchema>> }) {
 export function PaymentsTable({ data }: { data: z.infer<typeof paymentSchema>[] }) {
     const [rows, setRows] = React.useState(data)
     const [sorting, setSorting] = React.useState<SortingState>([])
+
+    // Sync rows when data changes
+    React.useEffect(() => {
+        setRows(data)
+    }, [data])
 
     const sensors = useSensors(
         useSensor(MouseSensor),
@@ -258,5 +276,36 @@ export function PaymentsTable({ data }: { data: z.infer<typeof paymentSchema>[] 
 
 // Default export
 export default function PaymentsDataTable() {
-    return <PaymentsTable data={paymentData} />
+    const { data: payments = [], isLoading, isError } = useQuery({
+        queryKey: ["shop-payments"],
+        queryFn: async () => {
+            const res = await api.get<any[]>("/payments/shop/me", { credentials: "include" })
+            return res.map(p => ({
+                id: p.id,
+                buyer: p.order?.buyer?.name || `User #${p.order?.buyerId}`,
+                orderId: p.orderId,
+                method: p.method,
+                status: p.status,
+                amount: p.amount,
+                paidAt: p.paidAt,
+                createdAt: p.createdAt,
+                order: p.order
+            })) as z.infer<typeof paymentSchema>[]
+        },
+    })
+
+    if (isLoading) return (
+        <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
+            <IconLoader className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest text-[10px] font-black opacity-40">Syncing Transactions...</p>
+        </div>
+    )
+
+    if (isError) return (
+        <div className="h-[60vh] flex items-center justify-center">
+            <p className="text-destructive font-medium border border-destructive/20 bg-destructive/5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest">Cloud sync failed</p>
+        </div>
+    )
+
+    return <PaymentsTable data={payments} />
 }

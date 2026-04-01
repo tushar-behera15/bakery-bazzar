@@ -1,418 +1,83 @@
 "use client"
 
 import * as React from "react"
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core"
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
-import {
-  
-  IconCircleCheckFilled,
-  IconDotsVertical,
-  IconGripVertical,
-  IconLoader,
-  IconPlus,
-} from "@tabler/icons-react"
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  Row,
-  SortingState,
-  useReactTable,
-} from "@tanstack/react-table"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import { z } from "zod"
-
-import { useIsMobile } from "@/hooks/use-mobile"
-import { Badge } from "@/components/ui/badge"
+import { IconChartBar, IconHistory, IconRocket } from "@tabler/icons-react"
+import { ShopStats } from "../_components/shop-stats"
 import { Button } from "@/components/ui/button"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-
 import { Separator } from "@/components/ui/separator"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import GlassCard from "@/components/ui/glass-card"
 
-
-// 🧾 Schema updated for Shop Field
-export const schema = z.object({
-  id: z.number(),
-  section: z.string(),
-  type: z.string(),
-  status: z.string(),
-  target: z.string(),
-  limit: z.string(),
-  manager: z.string(),
-})
-
-// 🧁 Indian Dummy Data for BakeryBazzar
-const shopData: z.infer<typeof schema>[] = [
-  {
-    id: 1,
-    section: "Cakes & Pastries",
-    type: "Food Category",
-    status: "Active",
-    target: "₹25,000",
-    limit: "₹30,000",
-    manager: "Rohit Sharma",
-  },
-  {
-    id: 2,
-    section: "Snacks & Namkeen",
-    type: "Food Category",
-    status: "Active",
-    target: "₹12,000",
-    limit: "₹15,000",
-    manager: "Neha Patel",
-  },
-  {
-    id: 3,
-    section: "Breads & Buns",
-    type: "Food Category",
-    status: "In Stock",
-    target: "₹10,000",
-    limit: "₹12,000",
-    manager: "Amit Yadav",
-  },
-  {
-    id: 4,
-    section: "Beverages",
-    type: "Drink Section",
-    status: "Low Stock",
-    target: "₹8,000",
-    limit: "₹10,000",
-    manager: "Kiran Mehta",
-  },
-  {
-    id: 5,
-    section: "Custom Orders",
-    type: "Service",
-    status: "Pending",
-    target: "₹5,000",
-    limit: "₹8,000",
-    manager: "Priya Nair",
-  },
-  {
-    id: 6,
-    section: "Gift Hampers",
-    type: "Special Section",
-    status: "Active",
-    target: "₹6,000",
-    limit: "₹10,000",
-    manager: "Aarav Kapoor",
-  },
-]
-
-// Drag handle for each row
-function DragHandle({ id }: { id: number }) {
-  const { attributes, listeners } = useSortable({ id })
-
+export default function MyShopPage() {
   return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent"
-    >
-      <IconGripVertical className="text-muted-foreground size-3" />
-      <span className="sr-only">Drag to reorder</span>
-    </Button>
-  )
-}
-
-// 🧮 Table Columns Definition
-const columns: ColumnDef<z.infer<typeof schema>>[] = [
-  { id: "drag", header: () => null, cell: ({ row }) => <DragHandle id={row.original.id} /> },
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-        />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "section",
-    header: "Section",
-    cell: ({ row }) => <TableCellViewer item={row.original} />,
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.type}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.status === "Active" ? (
-          <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-        ) : (
-          <IconLoader />
-        )}
-        {row.original.status}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "target",
-    header: "Target (₹)",
-    cell: ({ row }) => (
-      <Input
-        className="h-8 w-20 border-transparent bg-transparent text-right shadow-none"
-        defaultValue={row.original.target}
-      />
-    ),
-  },
-  {
-    accessorKey: "limit",
-    header: "Limit (₹)",
-    cell: ({ row }) => (
-      <Input
-        className="h-8 w-20 border-transparent bg-transparent text-right shadow-none"
-        defaultValue={row.original.limit}
-      />
-    ),
-  },
-  {
-    accessorKey: "manager",
-    header: "Manager",
-    cell: ({ row }) => (
-      <Badge variant="secondary" className="px-2">
-        {row.original.manager}
-      </Badge>
-    ),
-  },
-  {
-    id: "actions",
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="text-muted-foreground size-8">
-            <IconDotsVertical />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Duplicate</DropdownMenuItem>
-          <DropdownMenuItem>Mark as Favorite</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-]
-
-// 🧱 Draggable Table Row
-function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
-  const { transform, transition, setNodeRef } = useSortable({ id: row.original.id })
-  return (
-    <TableRow
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-    >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
-    </TableRow>
-  )
-}
-
-// 📊 Chart Data for Drawer
-const chartData = [
-  { month: "Jan", desktop: 186, mobile: 80 },
-  { month: "Feb", desktop: 305, mobile: 200 },
-  { month: "Mar", desktop: 237, mobile: 120 },
-  { month: "Apr", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "Jun", desktop: 214, mobile: 140 },
-]
-
-const chartConfig = {
-  desktop: { label: "Online Orders", color: "var(--primary)" },
-  mobile: { label: "In-Store Sales", color: "var(--primary)" },
-} satisfies ChartConfig
-
-// 🪟 Drawer for Section Details
-function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
-  const isMobile = useIsMobile()
-  return (
-    <Drawer direction={isMobile ? "bottom" : "right"}>
-      <DrawerTrigger asChild>
-        <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.section}
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>{item.section}</DrawerTitle>
-          <DrawerDescription>
-            Showing sales trends for this section over the last 6 months
-          </DrawerDescription>
-        </DrawerHeader>
-        <div className="px-4 pb-4">
-          <ChartContainer config={chartConfig}>
-            <AreaChart data={chartData} margin={{ left: 0, right: 10 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-              <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
-              <Area dataKey="mobile" type="natural" fill="var(--color-mobile)" fillOpacity={0.5} stroke="var(--color-mobile)" />
-              <Area dataKey="desktop" type="natural" fill="var(--color-desktop)" fillOpacity={0.4} stroke="var(--color-desktop)" />
-            </AreaChart>
-          </ChartContainer>
-          <Separator className="my-4" />
-          <div className="text-sm">
-            This section shows product performance and sales overview.
-          </div>
+    <div className="p-4 sm:p-8 space-y-10 max-w-[1400px] mx-auto min-h-screen">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground">Business Hub</h1>
+          <p className="text-muted-foreground text-sm font-medium opacity-70 italic font-mono tracking-tight">Your bakery empire at a glance.</p>
         </div>
-        <DrawerFooter>
-          <Button>Update</Button>
-          <DrawerClose asChild>
-            <Button variant="outline">Close</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-  )
-}
-
-// 🚀 Main DataTable Component
-export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
-  const [rows, setRows] = React.useState(data)
-  const [sorting, setSorting] = React.useState<SortingState>([])
-
-  const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
-    useSensor(KeyboardSensor)
-  )
-
-  const table = useReactTable({
-    data: rows,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  })
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (active && over && active.id !== over.id) {
-      setRows((rows) => {
-        const oldIndex = rows.findIndex((r) => r.id === active.id)
-        const newIndex = rows.findIndex((r) => r.id === over.id)
-        return arrayMove(rows, oldIndex, newIndex)
-      })
-    }
-  }
-
-  return (
-    <div className="w-full p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Shop Sections Overview</h2>
-        <Button variant="outline" size="sm">
-          <IconPlus /> Add Section
-        </Button>
+        <div className="flex gap-2">
+          <Button className="rounded-2xl font-black uppercase tracking-widest text-[10px] h-12 px-6 shadow-premium">
+            <IconRocket className="w-4 h-4 mr-2" /> Launch Promotion
+          </Button>
+        </div>
       </div>
 
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]} sensors={sensors}>
-        <Table>
-          <TableHeader className="bg-muted sticky top-0 z-10">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-              {table.getRowModel().rows.map((row) => (
-                <DraggableRow key={row.id} row={row} />
-              ))}
-            </SortableContext>
-          </TableBody>
-        </Table>
-      </DndContext>
+      {/* Analytics Section */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 px-2">
+          <div className="p-2 rounded-xl bg-primary/10 text-primary">
+            <IconChartBar className="w-4 h-4" />
+          </div>
+          <h2 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Live Performance Analytics</h2>
+        </div>
+        <ShopStats />
+      </div>
+
+      <Separator className="opacity-20" />
+
+      {/* Summary Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <GlassCard className="p-8 rounded-[2.5rem] bg-card/30 backdrop-blur-3xl border-border/40 shadow-premium">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+               <IconHistory className="w-4 h-4" />
+            </div>
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Recent Activity Feed</h3>
+          </div>
+          <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center">
+               <IconHistory className="w-8 h-8 text-muted-foreground opacity-20" />
+            </div>
+            <p className="text-xs font-medium text-muted-foreground max-w-[200px]">
+              No recent changes detected. Your shop is running smoothly.
+            </p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-8 rounded-[2.5rem] bg-card/30 backdrop-blur-3xl border-border/40 shadow-premium">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-500">
+               <IconRocket className="w-4 h-4" />
+            </div>
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Sales Goal Progress</h3>
+          </div>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                <span>Monthly Target</span>
+                <span className="text-primary">65% Achieved</span>
+              </div>
+              <div className="h-3 w-full bg-muted/30 rounded-full overflow-hidden">
+                <div className="h-full bg-primary w-[65%] rounded-full shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground italic font-medium">
+              You are ₹12,450 away from your monthly bakery revenue goal!
+            </p>
+          </div>
+        </GlassCard>
+      </div>
     </div>
   )
-}
-
-// 🏁 Export Ready-to-Use Component
-export default function ShopDataTable() {
-  return <DataTable data={shopData} />
 }

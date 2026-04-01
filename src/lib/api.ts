@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+export const BASE_URL = "http://localhost:5000/api";
 
 
 
@@ -32,7 +33,8 @@ async function apiFetch<T>(
     ...options.headers,
   };
 
-  const config = {
+  const config: RequestInit = {
+    credentials: 'include',
     ...options,
     headers,
   };

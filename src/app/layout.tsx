@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 import QueryProvider from "@/providers/query-provider";
+import { ThemeProvider } from "@/components/dashboard-stuffs/theme-provider";
 
 export default function RootLayout({
     children,
@@ -34,11 +35,18 @@ export default function RootLayout({
             >
                 <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
                 <QueryProvider>
-                    <ProgressBar className="bg-primary/60 h-1">
-                        <Toaster position="top-center" richColors />
+                    <ThemeProvider
+                        attribute="class"
+                        defaultTheme="system"
+                        enableSystem
+                        disableTransitionOnChange
+                    >
+                        <ProgressBar className="bg-primary/60 h-1">
+                            <Toaster position="top-center" richColors />
 
-                        {children}
-                    </ProgressBar>
+                            {children}
+                        </ProgressBar>
+                    </ThemeProvider>
                 </QueryProvider>
             </body>
         </html>

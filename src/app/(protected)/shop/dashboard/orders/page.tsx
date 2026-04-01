@@ -58,8 +58,9 @@ import {
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 
 // 🧾 Order Schema (Updated to match backend response)
@@ -73,6 +74,11 @@ export const orderSchema = z.object({
     }).optional(), // The backend now populates buyer object
     totalAmount: z.number(),
     status: z.enum(["PENDING", "COMPLETED", "CANCELLED", "SHIPPED", "DELIVERED", "PAID"]),
+    payment: z.object({
+        method: z.string(),
+        status: z.enum(["PENDING", "SUCCESS", "FAILED", "COMPLETED", "REFUNDED"]),
+    }).optional(),
+    paymentMethod: z.string().optional(),
     items: z.array(z.any()).optional(),
     itemsCount: z.number().optional(),
     createdAt: z.string(),
@@ -176,31 +182,91 @@ const columns: ColumnDef<OrderType>[] = [
         cell: ({ row }) => format(new Date(row.original.createdAt), "MMM d, yyyy")
     },
     {
+        id: "payment",
+        header: "Payment",
+        cell: ({ row }) => {
+            const method = (row.original.payment?.method || row.original.paymentMethod || "UPI").toUpperCase();
+            const isCash = method === "CASH";
+            return (
+                <Badge variant="outline" className={cn(
+                    "font-black tracking-widest text-[10px] uppercase",
+                    isCash ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                )}>
+                    {method}
+                </Badge>
+            );
+        }
+    },
+    {
         id: "actions",
-        cell: () => (
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost">
-                        <IconDotsVertical />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem onClick={() => toast.info("Viewing order details...")}>View</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toast.info("Editing order...")}>Edit</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                        variant="destructive" 
-                        onClick={() => toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
-                            loading: "Cancelling order...",
-                            success: "Order cancelled successfully!",
-                            error: "Failed to cancel order",
-                        })}
-                    >
-                        Cancel Order
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        ),
+        cell: ({ row }) => {
+            const queryClient = useQueryClient();
+            const [isApproving, setIsApproving] = React.useState(false);
+
+            const approvePayment = async () => {
+                setIsApproving(true);
+                const promise = api.patch(`/orders/${row.original.id}/status`, { status: "PAID" });
+
+                toast.promise(promise, {
+                    loading: "Approving payment...",
+                    success: () => {
+                        queryClient.invalidateQueries({ queryKey: ["shop-orders"] });
+                        setIsApproving(false);
+                        return "Payment approved! Order marked as PAID.";
+                    },
+                    error: () => {
+                        setIsApproving(false);
+                        return "Failed to approve payment";
+                    }
+                });
+            }
+
+            const isCashPending = row.original.status === "PENDING" && 
+                                 (row.original.payment?.method?.toUpperCase() === "CASH" || 
+                                  row.original.paymentMethod?.toUpperCase() === "CASH");
+
+            return (
+                <div className="flex items-center gap-2">
+                    {isCashPending && (
+                        <Button 
+                            size="sm" 
+                            variant="default" 
+                            disabled={isApproving}
+                            className="bg-green-600 hover:bg-green-700 text-white font-black text-[10px] uppercase tracking-widest h-8 px-4 rounded-lg shadow-soft hover:shadow-premium transition-all disabled:opacity-50"
+                            onClick={approvePayment}
+                        >
+                            {isApproving ? <IconLoader className="w-3 h-3 animate-spin mr-1" /> : "Approve"}
+                        </Button>
+                    )}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <IconDotsVertical />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onClick={() => toast.info("Viewing order details...")}>View</DropdownMenuItem>
+                            {isCashPending && (
+                                <DropdownMenuItem onClick={approvePayment} className="text-green-600 font-bold">
+                                    Approve Cash Payment
+                                </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                                variant="destructive" 
+                                onClick={() => toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
+                                    loading: "Cancelling order...",
+                                    success: "Order cancelled successfully!",
+                                    error: "Failed to cancel order",
+                                })}
+                            >
+                                Cancel Order
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            )
+        },
     },
 ]
 

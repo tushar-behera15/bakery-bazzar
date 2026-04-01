@@ -28,6 +28,7 @@ export default function ShopCard({ id, name, logo, tagline, rating, address, dis
                         src={logo}
                         alt={name}
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover transition-transform duration-700 group-hover/card:scale-110"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover/card:opacity-80 transition-opacity duration-300" />

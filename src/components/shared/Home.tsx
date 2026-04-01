@@ -288,6 +288,7 @@ const HomePage = () => {
                                     src={middleImage}
                                     alt="Bakery background"
                                     fill
+                                    sizes="100vw"
                                     className="object-cover opacity-20 grayscale brightness-50 transition-transform duration-1000 group-hover/cta:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-linear-to-br from-primary/60 via-foreground/80 to-foreground" />

@@ -159,7 +159,13 @@ export default function ShopDetails() {
 
                     <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8">
                         <div className="relative w-24 h-24 md:w-40 md:h-40 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border-4 border-background shadow-premium shrink-0">
-                            <Image src={shop.logo || croissantImage} alt={shop.name} fill className="object-cover" />
+                            <Image 
+                                src={shop.logo || croissantImage} 
+                                alt={shop.name} 
+                                fill 
+                                sizes="(max-width: 768px) 96px, 160px"
+                                className="object-cover" 
+                            />
                         </div>
                         
                         <div className="flex-1 text-center md:text-left space-y-3 md:space-y-4 w-full">
@@ -204,6 +210,7 @@ export default function ShopDetails() {
                                         src={product.images?.[0]?.url || breadImage.src}
                                         alt={product.name}
                                         fill
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                                         className="object-cover transition-transform duration-700 group-hover/card:scale-110"
                                     />
                                     

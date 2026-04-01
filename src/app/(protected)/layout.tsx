@@ -1,4 +1,3 @@
-import { ThemeProvider } from "@/components/dashboard-stuffs/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 
 export default function ProtectedLayout({
@@ -8,14 +7,7 @@ export default function ProtectedLayout({
 }) {
     return (
         <AuthProvider>
-            <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange>
-
-                {children}
-            </ThemeProvider>
+            {children}
         </AuthProvider>
     );
 }

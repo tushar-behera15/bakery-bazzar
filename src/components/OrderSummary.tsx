@@ -4,7 +4,7 @@
 import { Order } from "@/types/order";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, Receipt, Truck, Loader2 } from "lucide-react";
+import { CreditCard, Receipt, Loader2 } from "lucide-react";
 import GlassCard from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -79,9 +79,7 @@ export function OrderSummary({ order }: OrderSummaryProps) {
     }
   };
 
-  const subtotal = order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.1; // Example 10% tax
-  const shipping = subtotal > 500 ? 0 : 14; // Free shipping over 500
+  const total = order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   return (
     <GlassCard className="h-fit sticky top-24 overflow-hidden border-border/40 p-0 shadow-premium bg-linear-to-b from-background/40 to-muted/20">
@@ -93,27 +91,10 @@ export function OrderSummary({ order }: OrderSummaryProps) {
       </div>
       <div className="p-0">
         <div className="p-8 space-y-6">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Subtotal ({order.items.length} items)</span>
-            <span className="font-semibold">Rs {subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground flex items-center gap-1.5">
-              <Truck className="w-4 h-4" /> Shipping
-            </span>
-            <span className="font-semibold">{shipping === 0 ? "FREE" : `Rs ${shipping.toFixed(2)}`}</span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Tax (10%)</span>
-            <span className="font-semibold">Rs {tax.toFixed(2)}</span>
-          </div>
-
-          <Separator className="my-2" />
-
-          <div className="flex justify-between items-center pt-2">
-            <span className="text-lg font-bold">Total Amount</span>
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-bold text-muted-foreground">Amount ({order.items.length} items)</span>
             <span className="text-3xl font-black text-primary">
-              Rs {(subtotal + tax + shipping).toFixed(2)}
+              Rs {total.toFixed(2)}
             </span>
           </div>
         </div>
@@ -144,14 +125,24 @@ export function OrderSummary({ order }: OrderSummaryProps) {
             </div>
 
             {order.payment.status === 'PENDING' && (
-              <Button
-                onClick={handlePayNow}
-                className="w-full h-12 rounded-xl font-black text-base shadow-soft hover:shadow-premium bg-primary text-primary-foreground transition-all mt-4"
-                disabled={isPaying}
-              >
-                {isPaying ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
-                Pay Now
-              </Button>
+              order.payment.method === 'CASH' ? (
+                <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex flex-col items-center gap-2 text-center">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                    <span className="text-xs font-black uppercase tracking-widest">Wait for a while for payment approval</span>
+                  </div>
+                  <p className="text-[10px] opacity-70 font-bold uppercase">The seller needs to confirm your cash payment.</p>
+                </div>
+              ) : (
+                <Button
+                  onClick={handlePayNow}
+                  className="w-full h-12 rounded-xl font-black text-base shadow-soft hover:shadow-premium bg-primary text-primary-foreground transition-all mt-4"
+                  disabled={isPaying}
+                >
+                  {isPaying ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
+                  Pay Now
+                </Button>
+              )
             )}
           </div>
         )}

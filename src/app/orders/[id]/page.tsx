@@ -7,7 +7,6 @@ import { Order } from "@/types/order";
 import { api } from "@/lib/api";
 import { OrderItemRow } from "@/components/OrderItemRow";
 import { OrderSummary } from "@/components/OrderSummary";
-import { AddItemForm } from "@/components/AddItemForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Package, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
@@ -108,12 +107,20 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                 </div>
               </div>
 
-              <Link href="/orders">
-                <Button variant="outline" className="w-full sm:w-auto rounded-xl h-14 px-8 font-black text-base shadow-soft hover:shadow-premium hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all group mt-3">
-                  <ArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
-                  Back to Orders
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                {order.status === "PENDING" && order.payment?.method === "CASH" && (
+                  <div className="px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center gap-2 animate-pulse">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="text-xs font-black uppercase tracking-widest text-center">Your payment is requested, wait for a while.</span>
+                  </div>
+                )}
+                <Link href="/orders">
+                  <Button variant="outline" className="w-full sm:w-auto rounded-xl h-14 px-8 font-black text-base shadow-soft hover:shadow-premium hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all group">
+                    <ArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
+                    Back to Orders
+                  </Button>
+                </Link>
+              </div>
             </GlassCard>
 
             <section className="space-y-8">
@@ -145,10 +152,6 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
               </div>
             </section>
 
-            <section className="space-y-8">
-              <h2 className="text-3xl font-black tracking-tight border-b-2 border-dashed border-border/40 pb-6">Modify Order</h2>
-              <AddItemForm orderId={order.id} onSuccess={fetchOrderDetails} />
-            </section>
           </div>
 
           <aside className="w-full xl:w-[420px] shrink-0">
