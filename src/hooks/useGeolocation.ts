@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { calculateDistance } from "@/utils/geo";
 
 interface GeolocationState {
@@ -21,6 +21,14 @@ export const useGeolocation = () => {
     });
 
     const [refreshId, setRefreshId] = useState(0);
+    
+    // Use refs to track values and avoid stale closures in watchPosition
+    const lastUpdateRef = useRef<number>(0);
+    const coordsRef = useRef<{ lat: number | null; lng: number | null; acc: number | null }>({
+        lat: null,
+        lng: null,
+        acc: null
+    });
 
     const refresh = useCallback(() => setRefreshId(prev => prev + 1), []);
 
@@ -37,53 +45,68 @@ export const useGeolocation = () => {
         const options: PositionOptions = {
             enableHighAccuracy: true,
             timeout: 15000,
-            maximumAge: 0,
+            maximumAge: 10000, // Cache for 10 seconds to reduce frequent hardware wakeups
         };
 
         const onSuccess = (position: GeolocationPosition) => {
             const { latitude, longitude, accuracy } = position.coords;
+            const now = Date.now();
             
-            console.log(`Geolocation Update: ${latitude}, ${longitude} (±${accuracy}m)`);
+            // 1. Throttling: Ignore if less than 2 seconds since last state update
+            if (now - lastUpdateRef.current < 2000 && coordsRef.current.lat !== null) {
+                return;
+            }
 
-            setState(prev => {
-                // Initial update if we don't have location yet
-                if (prev.latitude === null || prev.longitude === null) {
-                    return { latitude, longitude, accuracy, error: null, loading: false };
-                }
+            // 2. Initial fix logic
+            if (coordsRef.current.lat === null || coordsRef.current.lng === null) {
+                lastUpdateRef.current = now;
+                coordsRef.current = { lat: latitude, lng: longitude, acc: accuracy };
+                setState({ latitude, longitude, accuracy, error: null, loading: false });
+                return;
+            }
 
-                // If the new position is significantly more accurate, always update
-                if (prev.accuracy !== null && accuracy < prev.accuracy * 0.5) {
-                    return { latitude, longitude, accuracy, error: null, loading: false };
-                }
+            // 3. Movement evaluation
+            const distanceKm = calculateDistance(
+                coordsRef.current.lat, 
+                coordsRef.current.lng, 
+                latitude, 
+                longitude
+            );
+            
+            // CRITERIA FOR UPDATE:
+            // - Moved more than 50 meters (0.05 km)
+            // - OR Moved more than 15 meters AND accuracy improved significantly (>50%)
+            const substantialMove = distanceKm >= 0.05;
+            const significantAccuracyImprovement = coordsRef.current.acc !== null && accuracy < (coordsRef.current.acc * 0.5);
+            const jitterMove = distanceKm >= 0.015;
 
-                // Calculate actual distance moved in km
-                const distanceKm = calculateDistance(prev.latitude, prev.longitude, latitude, longitude);
+            if (substantialMove || (significantAccuracyImprovement && jitterMove)) {
+                console.log(`Geolocation Updated: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${accuracy}m), Moved: ${(distanceKm * 1000).toFixed(1)}m`);
                 
-                // Only update if movement > 30 meters (0.03 km) to avoid request overwhelm due to GPS jitter
-                if (distanceKm < 0.03) {
-                    return prev;
-                }
-
-                return {
+                lastUpdateRef.current = now;
+                coordsRef.current = { lat: latitude, lng: longitude, acc: accuracy };
+                
+                setState({
                     latitude,
                     longitude,
                     accuracy,
                     error: null,
                     loading: false,
-                };
-            });
+                });
+            }
         };
 
         const onError = (error: GeolocationPositionError) => {
-            console.warn("Geolocation Error:", error.message);
-            // If it's a timeout, we don't want to set loading to false yet, 
-            // as watchPosition will keep trying.
+            // If it's a timeout, we don't want to set error state as watchPosition will keep trying.
             const isTimeout = error.code === error.TIMEOUT;
-            setState(s => ({
-                ...s,
-                error: error.message,
-                loading: isTimeout ? s.loading : false,
-            }));
+            if (!isTimeout) {
+                console.warn("Geolocation Error:", error.message);
+                setState(s => ({
+                    ...s,
+                    error: error.message,
+                    loading: false,
+                }));
+            }
         };
 
         const watchId = navigator.geolocation.watchPosition(onSuccess, onError, options);
