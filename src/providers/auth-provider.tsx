@@ -8,7 +8,13 @@ import { BASE_URL } from "@/lib/api";
 type Role = "BUYER" | "SELLER" | "ADMIN";
 
 interface AuthContextType {
-    user: { id: number; role: Role; name?: string; email?: string } | null;
+    user: { 
+        id: number; 
+        role: Role; 
+        name?: string; 
+        email?: string;
+        isShopActive?: boolean;
+    } | null;
     loading: boolean;
 }
 
@@ -43,6 +49,7 @@ export function AuthProvider({
                     role: data.user?.role as Role,
                     name: data.user?.name,
                     email: data.user?.email,
+                    isShopActive: data.user?.shops?.[0]?.isActive ?? true,
                 });
             } catch {
                 router.replace("/auth/login");

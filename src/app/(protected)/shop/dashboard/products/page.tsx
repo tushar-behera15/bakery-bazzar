@@ -245,7 +245,7 @@ export function ProductTable() {
             formData.append("productId", String(createdProduct.id))
             formData.append("isThumbnail", "true")
 
-            const uploadRes = await api.post<{ productImage: { url: string } }>("/upload/image", formData, { credentials: "include", headers: {} }); // Let fetch handle multipart headers
+            const uploadRes = await api.post<{ productImage: { url: string } }>("/upload/image", formData, { credentials: "include" });
             return { ...createdProduct, image: uploadRes.productImage.url };
         },
         onSuccess: () => {

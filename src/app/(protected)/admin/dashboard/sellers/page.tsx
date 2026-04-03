@@ -12,8 +12,9 @@ import {
     Header,
     Row as TableRowType
 } from "@tanstack/react-table";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 import {
     DndContext,
@@ -174,7 +175,23 @@ function ShopDrawer({ shop }: { shop: Shop }) {
 
 // 🧭 MAIN TABLE
 export default function ShopTable() {
+    const queryClient = useQueryClient();
     const [rows, setRows] = React.useState<Shop[]>([]);
+
+    const toggleStatusMutation = useMutation({
+        mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+            return await api.put(`/shop/admin/toggle-status/${id}`, { isActive }, { credentials: "include" });
+        },
+        onSuccess: (data: any) => {
+            queryClient.invalidateQueries({ queryKey: ["admin-all-shops"] });
+            toast.success(data.message || "Status updated successfully");
+        },
+        onError: (err: any) => {
+            console.error(err);
+            toast.error(err.message || "Failed to update shop status");
+        }
+    });
+
     const { data: shopsData, isLoading: loading } = useQuery<Shop[]>({
         queryKey: ["admin-all-shops"],
         queryFn: async () => {
@@ -254,7 +271,7 @@ export default function ShopTable() {
         },
         {
             id: "actions",
-            cell: () => (
+            cell: ({ row }: { row: TableRowType<Shop> }) => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -265,8 +282,12 @@ export default function ShopTable() {
                         <DropdownMenuItem>View Products</DropdownMenuItem>
                         <DropdownMenuItem>Edit Shop</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                            Deactivate
+                        <DropdownMenuItem
+                            className={row.original.isActive ? "text-destructive" : "text-green-600"}
+                            onClick={() => toggleStatusMutation.mutate({ id: row.original.id, isActive: !row.original.isActive })}
+                            disabled={toggleStatusMutation.isPending}
+                        >
+                            {row.original.isActive ? "Deactivate" : "Activate"}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

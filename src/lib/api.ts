@@ -28,10 +28,15 @@ async function apiFetch<T>(
 ): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
+  const isFormData = options.body instanceof FormData;
+
+  const headers: Record<string, string> = {
+    ...options.headers as Record<string, string>,
   };
+
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const config: RequestInit = {
     credentials: 'include',
@@ -70,21 +75,21 @@ export const api = {
     apiFetch<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: JSON.stringify(body),
+      body: body instanceof FormData ? body : JSON.stringify(body),
     }),
 
   patch: <T>(endpoint: string, body: any, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: 'PATCH',
-      body: JSON.stringify(body),
+      body: body instanceof FormData ? body : JSON.stringify(body),
     }),
 
   put: <T>(endpoint: string, body: any, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: JSON.stringify(body),
+      body: body instanceof FormData ? body : JSON.stringify(body),
     }),
 
   delete: <T>(endpoint: string, options?: RequestInit) =>

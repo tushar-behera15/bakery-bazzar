@@ -15,14 +15,14 @@ export function ShopHero({ shopName }: ShopHeroProps) {
             {/* Decorative background elements */}
             <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[140%] bg-primary/10 blur-[80px] rounded-full rotate-12 animate-pulse" />
             <div className="absolute bottom-[-30%] left-[-5%] w-[30%] h-[100%] bg-primary/5 blur-[60px] rounded-full" />
-            
+
             <div className="relative z-10 p-6 md:p-12 w-full min-h-[220px] flex flex-col md:flex-row justify-between items-center gap-8">
                 <div className="space-y-6 text-center md:text-left flex-1">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[9px] sm:text-[10px] font-black uppercase tracking-widest mx-auto md:mx-0">
                         <Store className="h-3 w-3" />
                         <span>Seller Dashboard</span>
                     </div>
-                    
+
                     <div className="space-y-2">
                         <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
                             Welcome to <span className="text-primary">{shopName || "Your Shop"}</span>
@@ -33,7 +33,7 @@ export function ShopHero({ shopName }: ShopHeroProps) {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 pt-2">
-                        <Link href="/shop/dashboard/products/add" className="w-full sm:w-auto">
+                        <Link href="/shop/dashboard/products" className="w-full sm:w-auto">
                             <Button className="w-full sm:w-auto rounded-xl h-14 px-8 gap-2 font-black shadow-lg shadow-primary/20 transition-all hover:-translate-y-1">
                                 <Plus className="h-5 w-5" /> Add Product
                             </Button>
